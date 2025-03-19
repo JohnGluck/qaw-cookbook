@@ -9,8 +9,8 @@ jobs:
     name: Run Playwright tests
     runs-on: ubuntu-latest #(microsoft/playwright)
     steps:
-      - name: Notify Slack (Job Started)
-        uses: rtCamp/action-slack-notify@v2
+        #- name: Notify Slack (Job Started)
+        #uses: rtCamp/action-slack-notify@v2
         #env:
         #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         #  SLACK_MESSAGE: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
@@ -33,9 +33,9 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
-      - name: Notify Slack (Job Success)
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
+      # - name: Notify Slack (Job Success)
+        #if: success()
+        #uses: rtCamp/action-slack-notify@v2
         #env:
         #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         #  SLACK_MESSAGE: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
