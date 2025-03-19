@@ -1,0 +1,40 @@
+name: 'Slack Notification on Job Success/Failure'
+description: 'Notify Slack on job success or failure'
+inputs:
+  channel-id:
+    description: 'Slack channel ID to send notifications to'
+    required: true
+    default: ''
+  success-message:
+    description: 'Message to send when the job is successful'
+    required: true
+    default: '✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}'
+  failure-message:
+    description: 'Message to send when the job fails'
+    required: true
+    default: '❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details.'
+  slack-token:
+    description: 'Slack Bot Token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: Notify Slack (Job Success)
+      if: success()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        channel-id: ${{ inputs.channel-id }}
+        slack-message: ${{ inputs.success-message }}
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
+
+    - name: Notify Slack (Job Failure)
+      if: failure()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        channel-id: ${{ inputs.channel-id }}
+        slack-message: ${{ inputs.failure-message }}
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack-token }}

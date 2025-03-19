@@ -1,0 +1,71 @@
+name: Dynamic Distribution - Round Robin
+on:
+  workflow_dispatch:
+jobs:
+  generate-matrix:
+    name: Generate Test Distribution
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Choose Test Distribution Strategy
+        id: set-matrix
+        uses: ./.github/actions/distribution/round-robin  # Change this line to switch strategies
+
+
+  test-runner:
+    name: Run Playwright Tests
+    needs: generate-matrix
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name:  Run Playwright
+        id: run
+        run: |
+          npx playwright test ${{ join(matrix.testFile, ' ') }}
+
+      # Sanitize the test file name to replace '/' with '-'
+
+      - name: Sanitize artifact name
+        id: sanitize
+        run: |
+          sanitized_name="${{ matrix.testFile[0] }}"
+          sanitized_name=$(echo "$sanitized_name" | sed 's/\//-/g')  # Replace / with -
+          echo "sanitized_name=$sanitized_name" >> $GITHUB_ENV  # Save to environment variable
+
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ env.sanitized_name }}  # Use the sanitized name
+          path: blob-report/  # Path where Playwright stores the reports (update as needed)
+          if-no-files-found: ignore
+          retention-days: 1
+
+  merge-reports:
+    name: Merge Playwright Reports
+    needs: test-runner
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge reports
+        uses: ./.github/actions/merge-reports

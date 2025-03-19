@@ -1,0 +1,90 @@
+name: Test Sharding
+on:
+  workflow_dispatch:
+jobs:
+  playwright:
+    name: Generate Test Shards
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    #this needs to be here for Firefox
+
+    env:
+      HOME: /root
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install
+      - name: Run assigned tests
+        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --config=playwright.config.recipe2.ts
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report
+          retention-days: 1
+  merge-reports:
+    # Merge reports after playwright-tests, even if some shards have failed
+    if: ${{ !cancelled() }}
+    needs: [playwright]
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Download blob reports from GitHub Actions Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: all-blob-reports
+        pattern: blob-report-*
+        merge-multiple: true
+
+    - name: Merge into HTML Report
+      run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-report--attempt-${{ github.run_attempt }}
+        path: playwright-report
+        retention-days: 1
+
+    - name: Notify Slack (Job Success)
+      if: success()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # eng-monitoring-ops
+        channel-id: "C03CX7K9JJG"
+        slack-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
+
+
+    - name: Notify Slack (Job Success)
+      if: failure()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # eng-monitoring-ops
+        channel-id: "C03CX7K9JJG"
+        slack-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}

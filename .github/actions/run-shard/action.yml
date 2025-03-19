@@ -1,0 +1,45 @@
+name: "Run Shard"
+description: "Run tests for one shard/browser combo and upload blob report"
+inputs:
+  shard:
+    required: true
+  browser:
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - run: npm ci
+      shell: bash
+
+    - run: npx playwright install --with-deps
+      shell: bash
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: test-splits
+        path: test-splits
+
+    - run: |
+        TESTS=$(cat test-splits/${{ inputs.shard }})
+        echo "TESTS=$TESTS" >> $GITHUB_ENV
+      shell: bash
+
+    - run: |
+        echo "▶️ Running ${{ inputs.shard }} on ${{ inputs.browser }}"
+        BROWSER=${{ inputs.browser }}
+        SHARD=${{ inputs.shard }}
+        npx playwright test $TESTS --project=$BROWSER --config=playwright.config.recipe3.ts
+      shell: bash
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: blob-report-${{ inputs.browser }}-${{ inputs.shard }}
+        path: blob-report/
+        if-no-files-found: ignore

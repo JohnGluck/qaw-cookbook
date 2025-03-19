@@ -1,0 +1,40 @@
+name: "Generate Playwright Shards"
+description: "Split tests and create a JSON array of shard names"
+inputs:
+  total-runners:
+    description: "Number of runners to split against"
+    required: true
+outputs:
+  shard_list:
+    description: "JSON array of test shard filenames"
+    value: ${{ steps.emit-shards.outputs.shard_list }}
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        mkdir -p test-splits
+        find tests -name "*.spec.ts" | sort > all-tests.txt
+        TOTAL_TESTS=$(wc -l < all-tests.txt)
+
+        TOTAL_RUNNERS="${{ inputs.total-runners }}"
+        if [ -z "$TOTAL_RUNNERS" ] || [ "$TOTAL_RUNNERS" -eq 0 ]; then
+          echo "❌ TOTAL_RUNNERS is empty or zero"
+          exit 1
+        fi
+        SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
+
+        split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
+
+        shards=$(ls test-splits | sort)
+        shard_array=""
+        for shard in $shards; do
+          shard_array+="\"$shard\","
+        done
+
+        shard_list="[${shard_array%,}]"
+        echo "$shard_list" > shard-list.txt
+      shell: bash
+
+    - id: emit-shards
+      run: echo "shard_list=$(cat shard-list.txt)" >> $GITHUB_OUTPUT
+      shell: bash

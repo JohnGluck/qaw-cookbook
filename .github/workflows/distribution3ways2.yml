@@ -1,0 +1,50 @@
+name: Dynamic Distribution - Tags
+on:
+  workflow_dispatch:
+
+jobs:
+
+  test-runner:
+    name: Run Playwright Tests
+    strategy:
+      matrix:
+        items: ["@smoke", "@regression", "@e2e"]  # Matrix should be an object with a key 'tags'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Playwright Tests for Tag
+        id: run
+        run: |
+          echo "Running Playwright tests for tag: ${{ matrix.items }}"
+          npx playwright test --grep "${{ matrix.items }}"
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.items }}  # Use the sanitized name
+          path: blob-report/  # Path where Playwright stores the reports (update as needed)
+          if-no-files-found: ignore
+          retention-days: 1
+
+  merge-reports:
+    name: Merge Playwright Reports
+    needs: test-runner
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge reports
+        uses: ./.github/actions/merge-reports

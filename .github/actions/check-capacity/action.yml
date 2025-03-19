@@ -1,0 +1,23 @@
+name: "Check GitHub Runner Capacity"
+description: "Check how many runners are available"
+inputs:
+  github-token:
+    description: "GitHub token to call the API"
+    required: true
+outputs:
+  available_runners:
+    description: "Number of available runners"
+    value: ${{ steps.check-capacity.outputs.available_runners }}
+runs:
+  using: "composite"
+  steps:
+    - id: check-capacity
+      run: |
+        MAX_RUNNERS=40
+        CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
+        AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
+        FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
+        echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}

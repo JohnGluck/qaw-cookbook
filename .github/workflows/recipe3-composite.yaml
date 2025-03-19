@@ -1,0 +1,92 @@
+name: Adaptive Playwright Tests (composite)
+on:
+  workflow_dispatch:    
+
+concurrency:
+  group: "tests-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  check-capacity:
+    runs-on: ubuntu-latest
+    outputs:
+      capacity: ${{ steps.check-capacity.outputs.available_runners }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check capacity
+        id: check-capacity
+        uses: ./.github/actions/check-capacity
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-shard:
+    runs-on: ubuntu-latest
+    needs: check-capacity
+    outputs:
+      shard_list: ${{ steps.set-shards.outputs.shard_list }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate shard list
+        id: set-shards
+        uses: ./.github/actions/generate-shards
+        with:
+          total-runners: ${{ needs.check-capacity.outputs.capacity }}
+
+      - name: Read shard list output
+        id: set-output
+        run: echo "shard_list=$(cat shard-list.txt)" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-splits
+          path: test-splits/
+
+  test:
+    name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
+    needs: generate-shard
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    env:
+      HOME: /root
+    strategy:
+      matrix:
+        shard: ${{ fromJson(needs.generate-shard.outputs.shard_list) }}
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test shard on browser
+        uses: ./.github/actions/run-shard
+        with:
+          shard: ${{ matrix.shard }}
+          browser: ${{ matrix.browser }}
+
+  merge-reports:
+    name: Merge Playwright Reports
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge reports
+        uses: ./.github/actions/merge-reports
+
+  notify-slack:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Notify Slack
+        uses: ./.github/actions/slack-notify
+        with:
+          channel-id: "C03CX7K9JJG"
+          success-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
+          failure-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+          slack-token: ${{ secrets.SLACK_SEND_TOKEN }}
