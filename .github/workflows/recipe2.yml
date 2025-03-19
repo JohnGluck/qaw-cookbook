@@ -22,7 +22,7 @@ jobs:
       - name: List all Playwright test files
         id: generate-test-list
         run: |
-          TEST_FILES=$(npx playwright list-files --json | jq -c '[.[] | .name]')
+          TEST_FILES=$(npx playwright list-files | jq -c '[.[] | .name]')
           echo "TEST_FILES=$TEST_FILES" >> $GITHUB_ENV
       - name: Split tests into 3 groups
         id: split-tests
