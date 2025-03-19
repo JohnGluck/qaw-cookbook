@@ -1,5 +1,5 @@
 name: Testing with Dynamic Sharding
-On:
+on:
   push:
     branches:
       - main
