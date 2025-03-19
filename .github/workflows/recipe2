@@ -1,0 +1,66 @@
+name: Playwright Tests (Dynamic Sharding)
+On:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  controller:
+    name: Generate Test Shards
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: List all Playwright test files
+        id: generate-test-list
+        run: |
+          TEST_FILES=$(npx playwright list-files --json | jq -c '[.[] | .name]')
+          echo "TEST_FILES=$TEST_FILES" >> $GITHUB_ENV
+      - name: Split tests into 3 groups
+        id: split-tests
+        run: |
+          TEST_FILES_JSON=$TEST_FILES
+          TOTAL_TESTS=$(echo "$TEST_FILES_JSON" | jq 'length')
+          SHARDS=3
+          echo "Splitting $TOTAL_TESTS tests into $SHARDS shards..."
+          # Create shards dynamically
+          MATRIX_JSON=$(jq -nc \
+            '[range(1; 4) as $shard | {shard: $shard, tests: ($TEST_FILES_JSON | .[($shard - 1) * ($TOTAL_TESTS / $SHARDS): $shard * ($TOTAL_TESTS / $SHARDS)])}]')
+          echo "MATRIX_JSON=$MATRIX_JSON" >> $GITHUB_ENV
+      - name: Save matrix for worker jobs
+        id: set-matrix
+        run: echo "::set-output name=matrix::$MATRIX_JSON"
+  test:
+    name: Run Playwright tests (Shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    needs: controller
+    strategy:
+      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run assigned tests
+        run: npx playwright test ${{ join(matrix.tests, ' ') }}
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 7
