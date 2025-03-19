@@ -45,5 +45,3 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_MESSAGE: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
-     retention-days: 7
-
