@@ -33,7 +33,7 @@ jobs:
           name: blob-report-${{ matrix.shardIndex }}
           path: blob-report
           retention-days: 1
-merge-reports:
+  merge-reports:
     # Merge reports after playwright-tests, even if some shards have failed
     if: ${{ !cancelled() }}
     needs: [playwright-tests]
@@ -43,7 +43,7 @@ merge-reports:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        node-version: 18
     - name: Install dependencies
       run: npm ci
 
@@ -62,4 +62,4 @@ merge-reports:
       with:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
-        retention-days: 14          
+        retention-days: 7         
