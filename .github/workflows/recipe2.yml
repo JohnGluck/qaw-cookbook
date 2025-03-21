@@ -25,11 +25,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install
       - name: Run assigned tests
-<<<<<<< HEAD
-        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --config playwright.config.recipe2.ts 
-=======
-        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --config=playwright.config.recipe2.tx
->>>>>>> 57f0e8b (Modify config for blog reports and modify action to point to config)
+        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --config=playwright.config.recipe2.ts
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
