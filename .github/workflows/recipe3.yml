@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-
+  pull_request:
 concurrency:
   group: "tests-${{ github.ref }}"
   cancel-in-progress: false  # Ensures in-progress jobs complete instead of being canceled
@@ -63,7 +63,7 @@ jobs:
       - name: Generate matrix from test splits
         id: set-matrix
         run: |
-          MATRIX=$(ls tests | jq -R -s -c 'split("\n")[:-1] | map({shard: .})')
+          MATRIX=$(ls test-splits | jq -R -s -c 'split("\n")[:-1] | map({shard: .})')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   test:
