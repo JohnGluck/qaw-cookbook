@@ -45,6 +45,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Split tests evenly across runners
+        run: |
+          mkdir -p test-splits
+
+          find tests -name "*.spec.ts" | sort > all-tests.txt
+
+          if [[ ! -s all-tests.txt ]]; then
+            echo "❌ No test files found."
+            exit 1
+          fi
+
+          TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
+          if [[ -z "$TOTAL_RUNNERS" || "$TOTAL_RUNNERS" -le 0 ]]; then
+            echo "❌ Invalid runner count: $TOTAL_RUNNERS"
+            exit 1
+          fi
+
+          TOTAL_TESTS=$(wc -l < all-tests.txt)
+          SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
+
+          split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
+
+          echo "✅ Created shards:"
+          ls -1 test-splits
       - name: Upload test splits
         uses: actions/upload-artifact@v4
         with:
@@ -54,7 +78,7 @@ jobs:
       - name: Show test shards
         run: |
           echo "Generated shards:"
-          ls -l test-splits      
+          ls -l test-splits
 
       - name: Generate matrix from test splits
         id: set-matrix
