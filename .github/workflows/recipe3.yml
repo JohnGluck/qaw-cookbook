@@ -19,7 +19,7 @@ jobs:
         id: get-runners
         run: |
           MAX_RUNNERS=40  # Max allowed in the org
-          CURRENT_RUNNING=$(gh run list --limit 40 --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
+          CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
           FINAL_COUNT=$((AVAILABLE > 5 ? 5 : AVAILABLE))  # Ensure at least 5 runners available
           echo "Available runners: $FINAL_COUNT"
@@ -63,7 +63,7 @@ jobs:
       - name: Generate matrix from test splits
         id: set-matrix
         run: |
-          MATRIX=$(ls test-splits | jq -R -s -c 'split("\n")[:-1] | map({shard: .})')
+          MATRIX=$(ls tests | jq -R -s -c 'split("\n")[:-1] | map({shard: .})')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   test:
