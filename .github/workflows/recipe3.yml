@@ -21,7 +21,7 @@ jobs:
           MAX_RUNNERS=40  # Max allowed in the org
           CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
-          FINAL_COUNT=$((AVAILABLE > 5 ? 5 : AVAILABLE))  # Ensure at least 5 runners available
+          FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))  # Ensure at least 5 runners available
           echo "Available runners: $FINAL_COUNT"
           echo "count=$FINAL_COUNT" >> $GITHUB_OUTPUT
         env:
@@ -45,20 +45,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Split tests evenly across runners
-        run: |
-          mkdir -p test-splits
-          TEST_FILES=$(find tests -name "*.spec.ts" | sort)
-          TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
-          SPLIT_COUNT=$(( $(echo "$TEST_FILES" | wc -l) / TOTAL_RUNNERS + 1 ))
-
-          echo "$TEST_FILES" | split -l $SPLIT_COUNT - test-splits/shard_
-
       - name: Upload test splits
         uses: actions/upload-artifact@v4
         with:
           name: test-assignments
           path: test-splits/
+
+      - name: Show test shards
+        run: |
+          echo "Generated shards:"
+          ls -l test-splits      
 
       - name: Generate matrix from test splits
         id: set-matrix
