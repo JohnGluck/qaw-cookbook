@@ -77,9 +77,11 @@ jobs:
           echo "✅ Matrix content:"
           echo "$matrix" | jq
           echo "matrix=$(echo "$matrix" | jq -c .)" >> $GITHUB_OUTPUT
-            - name: Debug matrix output
-              run: |
-                echo "🧪 Final matrix: ${{ steps.set-matrix.outputs.matrix }}"
+
+      - name: Debug matrix output
+        run: |
+          echo "🧪 Final matrix:"
+          echo '${{ steps.set-matrix.outputs.matrix }}'
 
       - uses: actions/upload-artifact@v4
         with:
