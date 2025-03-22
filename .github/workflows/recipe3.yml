@@ -112,7 +112,7 @@ jobs:
 
       - name: Run assigned testss
         run: |
-          npx playwright test $TESTS -config=playwright.config.recipe2.ts
+          npx playwright test $TESTS --config=playwright.config.recipe2.ts
 
       - name: Save JSON report
         if: always()
