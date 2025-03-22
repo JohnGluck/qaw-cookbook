@@ -79,6 +79,7 @@ jobs:
           echo "$matrix" | jq .
 
           # Use multiline output syntax to preserve full JSON format
+
       - name: Debug matrix output
         run: |
           echo "🧪 Final matrix:"
@@ -88,24 +89,6 @@ jobs:
         with:
           name: test-assignments
           path: test-splits/
-
-  matrix-maker:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.make.outputs.matrix }}
-    steps:
-      - id: make
-        run: |
-          matrix='[{"shard":"shard_aa","browser":"chromium"}]'
-          printf "matrix<<EOF\n%s\nEOF\n" "$matrix" >> $GITHUB_OUTPUT
-
-  use-matrix:
-    runs-on: ubuntu-latest
-    needs: matrix-maker
-    strategy:
-      matrix: ${{ fromJson(needs.matrix-maker.outputs.matrix) }}
-    steps:
-      - run: echo "✅ Got shard ${{ matrix.shard }} for browser ${{ matrix.browser }}"
 
   debug-matrix:
     runs-on: ubuntu-latest
