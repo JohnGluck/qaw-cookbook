@@ -173,10 +173,6 @@ jobs:
           path: merged-results
           merge-multiple: true
 
-      - name: Merge Playwright reports
-        run: |
-          npx playwright merge-reports --reporter html ./merged-results
-
       - name: Check if merged-results was created
         run: |
           if [ ! -d merged-results ] || [ -z "$(ls -A merged-results)" ]; then
@@ -185,7 +181,13 @@ jobs:
           fi
           echo "✅ Reports downloaded:"
           ls -l merged-results
-          
+
+      - name: Merge Playwright reports
+        run: |
+          npx playwright merge-reports --reporter html ./merged-results
+
+
+
       - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
         with:
