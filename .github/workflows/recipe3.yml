@@ -123,12 +123,22 @@ jobs:
 
       - name: Run assigned tests
         run: npx playwright test $TESTS --reporter=json --output=test-results/
+        run: |
+          ls -l test-results
 
       - name: Save JSON report
         if: always()
         run: |
           mkdir -p results-json
           cp test-results/*.json results-json/ || echo "No JSON report found"
+      - name: Check if merged-results was created
+      run: |
+        if [ ! -d merged-results ] || [ -z "$(ls -A merged-results)" ]; then
+          echo "❌ No JSON reports found to merge. Exiting."
+          exit 0
+        fi
+        echo "✅ Reports downloaded:"
+        ls -l merged-results
 
       - name: Upload JSON report
         if: always()
