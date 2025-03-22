@@ -72,14 +72,14 @@ jobs:
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
           browsers='["chromium", "firefox", "webkit"]'
+
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
-            '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+            '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]' | jq -c)
 
           echo "✅ Matrix content:"
           echo "$matrix" | jq .
 
-          # This is the correct way to safely set multiline outputs with JSON
-          printf "matrix<<EOF\n%s\nEOF\n" "$matrix" >> "$GITHUB_OUTPUT"
+          printf "matrix=%s\n" "$matrix" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix output
         run: |
