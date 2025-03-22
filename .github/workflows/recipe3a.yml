@@ -78,6 +78,7 @@ jobs:
           echo "✅ Matrix content:"
           echo "$matrix" | jq .
 
+
           compact=$(echo "$matrix" | jq -c .)
           echo "matrix=$compact" >> "$GITHUB_OUTPUT"
 
