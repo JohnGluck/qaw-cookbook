@@ -4,7 +4,7 @@ on:
     branches:
       - main
   pull_request:
-    
+
 concurrency:
   group: "tests-${{ github.ref }}"
   cancel-in-progress: false
@@ -19,11 +19,12 @@ jobs:
       - name: Get Current Running Jobs
         id: get-runners
         run: |
-          MAX_RUNNERS=40
-          CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
-          AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
-          FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
-          echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+     shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
+    browsers='["chromium", "firefox", "webkit"]'
+    matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]' | jq -c)
+    echo "matrix<<EOF" >> $GITHUB_OUTPUT
+    echo "$matrix" >> $GITHUB_OUTPUT
+    echo "EOF" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
