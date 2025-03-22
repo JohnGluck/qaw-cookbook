@@ -101,6 +101,15 @@ jobs:
         run: |
           echo "🔍 Matrix from controller: ${{ needs.controller.outputs.matrix }}"
 
+  inspect-matrix:
+    needs: controller
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print raw matrix output
+        run: |
+          echo "RAW: ${{ needs.controller.outputs.matrix }}"
+          echo "TRY TO PARSE"
+          echo '${{ fromJson(needs.controller.outputs.matrix) }}'
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
     needs: controller
