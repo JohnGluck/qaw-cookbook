@@ -22,7 +22,7 @@ jobs:
           CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
           FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))  # Ensure at least 5 runners available
-          available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+          echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
