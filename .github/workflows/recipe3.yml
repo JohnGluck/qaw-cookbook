@@ -104,7 +104,8 @@ jobs:
           path: test-splits
 
       - name: Debug current shard
-        run: echo "🔢 Running shard: ${{ matrix.shard }}"
+        run: |
+          echo "🔢 Running shard: ${{ matrix.shard }}"
 
       - name: Read assigned tests
         id: load-tests
