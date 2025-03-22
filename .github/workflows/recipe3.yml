@@ -59,9 +59,9 @@ jobs:
         id: set-matrix
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
-          browsers=${{ steps.browsers.outputs.browsers }}
+          browsers='["chromium", "firefox", "webkit"]'
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "matrix=$(echo "$matrix" | jq -c)" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v4
         with:
