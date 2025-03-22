@@ -74,9 +74,12 @@ jobs:
           browsers='["chromium", "firefox", "webkit"]'
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
             '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+
           echo "✅ Matrix content:"
-          echo "$matrix" | jq
-          echo "matrix=$(echo "$matrix" | jq -c .)" >> $GITHUB_OUTPUT
+          echo "$matrix" | jq .
+
+          compact=$(echo "$matrix" | jq -c .)
+          echo "matrix=$compact" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix output
         run: |
