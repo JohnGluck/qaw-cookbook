@@ -78,7 +78,8 @@ jobs:
           echo "✅ Matrix content:"
           echo "$matrix" | jq .
 
-          # Use multiline output syntax to preserve full JSON format
+          # This is the correct way to safely set multiline outputs with JSON
+          printf "matrix<<EOF\n%s\nEOF\n" "$matrix" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix output
         run: |
@@ -107,6 +108,7 @@ jobs:
           echo "RAW: ${{ needs.controller.outputs.matrix }}"
           echo "TRY TO PARSE"
           echo '${{ fromJson(needs.controller.outputs.matrix) }}'
+
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
     needs: controller
