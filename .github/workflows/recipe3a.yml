@@ -1,0 +1,148 @@
+name: Adaptive Playwright Tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    
+concurrency:
+  group: "tests-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  check-capacity:
+    name: Check Available Runners
+    runs-on: ubuntu-latest
+    outputs:
+      available_runners: ${{ steps.get-runners.outputs.available_runners }}
+    steps:
+      - name: Get Current Running Jobs
+        id: get-runners
+        run: |
+          MAX_RUNNERS=40
+          CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
+          AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
+          FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
+          echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  controller:
+    runs-on: ubuntu-latest
+    needs: check-capacity
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Split tests into shards
+        run: |
+          mkdir -p test-splits
+          find tests -name "*.spec.ts" | sort > all-tests.txt
+          TOTAL_TESTS=$(wc -l < all-tests.txt)
+          TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
+          SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
+          split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
+
+      - name: Generate combined shard-browser matrix
+        id: set-matrix
+        run: |
+          shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
+          browsers='["chromium", "firefox", "webkit"]'
+          matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-assignments
+          path: test-splits/
+
+  test:
+    name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
+    needs: controller
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    env:
+      HOME: /root
+    strategy:
+      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-assignments
+          path: test-splits
+
+      - name: Set TESTS env var
+        run: |
+          TESTS=$(cat test-splits/${{ matrix.shard }})
+          echo "TESTS=$TESTS" >> $GITHUB_ENV
+
+      - name: Run assigned tests
+        run: |
+          echo "Running shard ${{ matrix.shard }} on browser ${{ matrix.browser }}"
+          BROWSER=${{ matrix.browser }} \
+          SHARD=${{ matrix.shard }} \
+          npx playwright test $TESTS --project=${{ matrix.browser }} --config=playwright.config.recipe2.ts
+
+      - name: Save report
+        if: always()
+        run: |
+          mkdir -p results-json
+          cp test-results/*.json results-json/ || echo "No JSON report found"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
+          path: results-json/
+          if-no-files-found: ignore
+
+  merge-reports:
+    name: Merge Playwright Reports
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download all JSON reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: results-json-*
+          path: merged-results
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        run: |
+          npx playwright merge-reports --reporter html ./merged-results
+
+      - name: Upload merged HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-playwright-report
+          path: playwright-report/
