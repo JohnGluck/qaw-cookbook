@@ -121,9 +121,10 @@ jobs:
           TESTS=$(cat test-splits/${{ matrix.shard }})
           echo "TESTS=$TESTS" >> $GITHUB_ENV
 
-      - name: Run assigned tests
-        run: npx playwright test $TESTS --reporter=json --output=test-results/
+      - name: Run assigned testss
         run: |
+          npx playwright test $TESTS --reporter=json --output=test-results/
+
           ls -l test-results
 
       - name: Save JSON report
