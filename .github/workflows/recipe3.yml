@@ -116,16 +116,10 @@ jobs:
         run: |
           echo "🔢 Running shard: ${{ matrix.shard }}"
 
-      - name: Read assigned tests
-        id: load-tests
-        run: |
-          TESTS=$(cat test-splits/${{ matrix.shard }})
-
-      - name: Show which tests are running
-        run: echo "🧪 TESTS=$TESTS"
-
       - name: Run assigned testss
         run: |
+          TESTS=$(cat test-splits/${{ matrix.shard }})
+          echo "🧪 Running: $TESTS"
           npx playwright test $TESTS --config=playwright.config.recipe2.ts
 
       - name: Debug test-results folder
