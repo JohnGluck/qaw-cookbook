@@ -70,24 +70,16 @@ jobs:
       - name: Generate combined shard-browser matrix
         id: set-matrix
         run: |
-          echo "📦 Collecting shards and browsers"
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
           browsers='["chromium", "firefox", "webkit"]'
-
-          echo "📋 Shards: $shards"
-          echo "🌐 Browsers: $browsers"
-
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
             '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
-
           echo "✅ Matrix content:"
-          echo "$matrix"
-
-          # Safely write compact JSON as output
-          echo "matrix=$(echo "$matrix" | jq -c)" >> $GITHUB_OUTPUT
-      - name: Debug matrix output
-        run: |
-          echo "🧪 Final matrix: ${{ steps.set-matrix.outputs.matrix }}"
+          echo "$matrix" | jq
+          echo "matrix=$(echo "$matrix" | jq -c .)" >> $GITHUB_OUTPUT
+            - name: Debug matrix output
+              run: |
+                echo "🧪 Final matrix: ${{ steps.set-matrix.outputs.matrix }}"
 
       - uses: actions/upload-artifact@v4
         with:
