@@ -74,6 +74,7 @@ jobs:
         id: set-matrix
         run: |
           MATRIX=$(ls test-splits | jq -R -s -c '{shard: split("\n")[:-1]}')
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   test:
     name: Run Playwright tests (Shard ${{ matrix.shard }})
