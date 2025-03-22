@@ -46,11 +46,22 @@ jobs:
       - name: Split tests evenly across runners
         run: |
           mkdir -p test-splits
+
           find tests -name "*.spec.ts" | sort > all-tests.txt
-          TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
+
+          if [[ ! -s all-tests.txt ]]; then
+            exit 1
+          fi
+
           TOTAL_TESTS=$(wc -l < all-tests.txt)
           SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
+
           split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
+
+          echo "✅ Created shards:"
+          ls -1 test-splits
+  env:
+    TOTAL_RUNNERS: ${{ needs.check-capacity.outputs.available_runners }}
 
       - name: Upload test splits
         uses: actions/upload-artifact@v4
