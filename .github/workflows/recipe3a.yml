@@ -122,7 +122,7 @@ jobs:
       HOME: /root
 
     strategy:
-      matrix: ${{ needs.controller.outputs.matrix }}
+      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
 
     steps:
       - name: Debug matrix values
