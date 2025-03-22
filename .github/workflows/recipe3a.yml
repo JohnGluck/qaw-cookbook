@@ -79,10 +79,9 @@ jobs:
           echo "✅ Matrix content:"
           echo "$matrix" | jq .
 
-          # Escape quotes for GITHUB_OUTPUT (this is the fix)
-          escaped=$(echo "$matrix" | jq -c | sed 's/"/\\"/g')
-
-          echo "matrix=\"$escaped\"" >> "$GITHUB_OUTPUT"
+          echo "matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "$matrix" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Debug matrix output
         run: |
