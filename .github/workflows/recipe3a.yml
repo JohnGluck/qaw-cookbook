@@ -119,10 +119,8 @@ jobs:
       HOME: /root
 
     strategy:
-      matrix:
-        shard: [shard_aa, shard_ab]
-        browser: [chromium, firefox, webkit]
-        
+      matrix: ${{ needs.controller.outputs.matrix }}
+
     steps:
       - name: Debug matrix values
         run: |
