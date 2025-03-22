@@ -13,7 +13,7 @@ jobs:
     name: Check Available Runners
     runs-on: ubuntu-latest
     outputs:
-      available_runners: ${{ steps.get-runners.outputs.count }}
+      available_runners: ${{ steps.get-runners.outputs.available_runners }}
     steps:
       - name: Get Current Running Jobs
         id: get-runners
@@ -22,6 +22,7 @@ jobs:
           CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
           FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))  # Ensure at least 5 runners available
+          available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
