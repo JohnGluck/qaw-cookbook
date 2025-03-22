@@ -118,9 +118,11 @@ jobs:
 
       - name: Run assigned testss
         run: |
+          npx playwright --version
           TESTS=$(cat test-splits/${{ matrix.shard }})
           echo "🧪 Running: $TESTS"
           npx playwright test $TESTS --config=playwright.config.recipe2.ts
+          run: echo "Exit code: $?"
 
       - name: Debug test-results folder
         if: always()
