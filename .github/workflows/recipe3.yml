@@ -62,6 +62,15 @@ jobs:
           ls -1 test-splits
         env:
           TOTAL_RUNNERS: ${{ needs.check-capacity.outputs.available_runners }}
+
+      - name: Show contents of each shard
+        run: |
+          for file in test-splits/*; do
+            echo "📄 $file"
+            cat "$file"
+            echo ""
+          done
+
       - name: Upload test splits
         uses: actions/upload-artifact@v4
         with:
