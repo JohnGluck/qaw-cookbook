@@ -1,9 +1,6 @@
 name: Adaptive Playwright Tests
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
 concurrency:
   group: "tests-${{ github.ref }}"
   cancel-in-progress: false  # Ensures in-progress jobs complete instead of being canceled
@@ -59,7 +56,7 @@ jobs:
         id: set-matrix
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
-          browsers='${{ steps.browsers.outputs.browsers }}'
+          browsers=${{ steps.browsers.outputs.browsers }}
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
@@ -68,50 +65,51 @@ jobs:
           name: test-assignments
           path: test-splits/
 
-  test:
-    needs: controller
-    runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.51.1-jammy
-    env:
-      HOME: /root
-    strategy:
-      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
+    test:
+      needs: controller
+      runs-on: ubuntu-latest
+      container:
+        image: mcr.microsoft.com/playwright:v1.51.1-jammy
+      env:
+        HOME: /root
+      strategy:
+        matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-node@v4
+          with:
+            node-version: 18
+        - run: npm ci
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: test-assignments
-          path: test-splits
+        - uses: actions/download-artifact@v4
+          with:
+            name: test-assignments
+            path: test-splits
 
-      - name: Set TESTS env var
-        run: |
-          TESTS=$(cat test-splits/${{ matrix.shard }})
-          echo "TESTS=$TESTS" >> $GITHUB_ENV
+        - name: Set TESTS env var
+          run: |
+            TESTS=$(cat test-splits/${{ matrix.shard }})
+            echo "TESTS=$TESTS" >> $GITHUB_ENV
 
-      - name: Run assigned tests
-        run: |
-          echo "Running shard ${{ matrix.shard }} on browser ${{ matrix.browser }}"
-          BROWSER=${{ matrix.browser }} \
-          npx playwright test $TESTS --project=${{ matrix.browser }} --config=playwright.config.recipe2.ts
+        - name: Run assigned tests
+          run: |
+            echo "Running shard ${{ matrix.shard }} on browser ${{ matrix.browser }}"
+            BROWSER=${{ matrix.browser }} \
+            SHARD=${{ matrix.shard }} \
+            npx playwright test $TESTS --project=${{ matrix.browser }} --config=playwright.config.recipe2.ts
 
-      - name: Save report
-        if: always()
-        run: |
-          mkdir -p results-json
-          cp test-results/*.json results-json/ || echo "No JSON report found"
+        - name: Save report
+          if: always()
+          run: |
+            mkdir -p results-json
+            cp test-results/*.json results-json/ || echo "No JSON report found"
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
-          path: results-json/
-          if-no-files-found: ignore
+        - uses: actions/upload-artifact@v4
+          if: always()
+          with:
+            name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
+            path: results-json/
+            if-no-files-found: ignore
 
   merge-reports:
     name: Merge Playwright Reports
