@@ -22,8 +22,6 @@ jobs:
           CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
           FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))  # Ensure at least 5 runners available
-          echo "Available runners: $FINAL_COUNT"
-          echo "count=$FINAL_COUNT" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -48,44 +46,22 @@ jobs:
       - name: Split tests evenly across runners
         run: |
           mkdir -p test-splits
-
           find tests -name "*.spec.ts" | sort > all-tests.txt
-
-          if [[ ! -s all-tests.txt ]]; then
-            echo "❌ No test files found."
-            exit 1
-          fi
-
           TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
-          if [[ -z "$TOTAL_RUNNERS" || "$TOTAL_RUNNERS" -le 0 ]]; then
-            echo "❌ Invalid runner count: $TOTAL_RUNNERS"
-            exit 1
-          fi
-
           TOTAL_TESTS=$(wc -l < all-tests.txt)
           SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
-
           split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
 
-          echo "✅ Created shards:"
-          ls -1 test-splits
       - name: Upload test splits
         uses: actions/upload-artifact@v4
         with:
           name: test-assignments
           path: test-splits/
 
-      - name: Show test shards
-        run: |
-          echo "Generated shards:"
-          ls -l test-splits
-
       - name: Generate matrix from test splits
         id: set-matrix
         run: |
           MATRIX=$(ls test-splits | jq -R -s -c '{shard: split("\n")[:-1]}')
-          echo "Generated matrix: $MATRIX"
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   test:
     name: Run Playwright tests (Shard ${{ matrix.shard }})
@@ -94,6 +70,7 @@ jobs:
         image: mcr.microsoft.com/playwright:v1.51.1-jammy
     env:
         HOME: /root
+
     needs: controller
     strategy:
       matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
@@ -119,19 +96,16 @@ jobs:
         id: load-tests
         run: |
           TESTS=$(cat test-splits/${{ matrix.shard }})
-          echo "TESTS=$TESTS" >> $GITHUB_ENV
 
       - name: Run assigned testss
         run: |
-          npx playwright test $TESTS --reporter=json --output=test-results/
-          ls -l test-results
+          npx playwright test $TESTS -config=playwright.config.recipe2.ts
 
       - name: Save JSON report
         if: always()
         run: |
           mkdir -p results-json
           cp test-results/*.json results-json/ || echo "No JSON report found"
-
 
       - name: Upload JSON report
         if: always()
@@ -173,20 +147,9 @@ jobs:
           path: merged-results
           merge-multiple: true
 
-      - name: Check if merged-results was created
-        run: |
-          if [ ! -d merged-results ] || [ -z "$(ls -A merged-results)" ]; then
-            echo "❌ No JSON reports found to merge. Exiting."
-            exit 0
-          fi
-          echo "✅ Reports downloaded:"
-          ls -l merged-results
-
       - name: Merge Playwright reports
         run: |
           npx playwright merge-reports --reporter html ./merged-results
-
-
 
       - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
