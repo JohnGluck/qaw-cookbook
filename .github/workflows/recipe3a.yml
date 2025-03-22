@@ -80,8 +80,9 @@ jobs:
 
 
           compact=$(echo "$matrix" | jq -c .)
-          echo "matrix=$compact" >> "$GITHUB_OUTPUT"
-
+          echo "matrix<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$compact" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
       - name: Debug matrix output
         run: |
           echo "🧪 Final matrix:"
@@ -113,6 +114,10 @@ jobs:
       matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
 
     steps:
+      - name: Debug matrix values
+        run: |
+          echo "SHARD: ${{ matrix.shard }}"
+          echo "BROWSER: ${{ matrix.browser }}"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
