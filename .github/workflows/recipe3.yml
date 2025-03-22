@@ -103,6 +103,9 @@ jobs:
           name: test-assignments
           path: test-splits
 
+      - name: Debug current shard
+        run: echo "🔢 Running shard: ${{ matrix.shard }}"
+
       - name: Read assigned tests
         id: load-tests
         run: |
@@ -110,7 +113,7 @@ jobs:
 
       - name: Show which tests are running
         run: echo "🧪 TESTS=$TESTS"
-        
+
       - name: Run assigned testss
         run: |
           npx playwright test $TESTS --config=playwright.config.recipe2.ts
