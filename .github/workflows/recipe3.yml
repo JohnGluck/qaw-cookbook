@@ -26,131 +26,92 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  controller:
-    name: Generate Test Shards
-    runs-on: ubuntu-latest
-    needs: check-capacity
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+controller:
+  runs-on: ubuntu-latest
+  needs: check-capacity
+  outputs:
+    matrix: ${{ steps.set-matrix.outputs.matrix }}
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Split tests evenly across runners
-        run: |
-          mkdir -p test-splits
+    - name: Split tests into shards
+      run: |
+        mkdir -p test-splits
+        find tests -name "*.spec.ts" | sort > all-tests.txt
+        TOTAL_TESTS=$(wc -l < all-tests.txt)
+        TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
+        SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
+        split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
 
-          find tests -name "*.spec.ts" | sort > all-tests.txt
+    - name: Get browser list from config
+      id: browsers
+      run: echo "browsers=$(node get-browsers.js)" >> $GITHUB_OUTPUT
 
-          if [[ ! -s all-tests.txt ]]; then
-            exit 1
-          fi
+    - name: Generate combined shard-browser matrix
+      id: set-matrix
+      run: |
+        shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
+        browsers='${{ steps.browsers.outputs.browsers }}'
+        matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+        echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
-          TOTAL_TESTS=$(wc -l < all-tests.txt)
-          SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
-
-          split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
-
-          ls -1 test-splits
-        env:
-          TOTAL_RUNNERS: ${{ needs.check-capacity.outputs.available_runners }}
-
-      - name: Show contents of each shard
-        run: |
-          for file in test-splits/*; do
-            echo "📄 $file"
-            cat "$file"
-            echo ""
-          done
-
-      - name: Upload test splits
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-assignments
-          path: test-splits/
-
-      - name: Generate matrix from test splits
-        id: set-matrix
-        run: |
-          MATRIX=$(ls test-splits | jq -R -s -c '{shard: split("\n")[:-1]}')
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+    - uses: actions/upload-artifact@v4
+      with:
+        name: test-assignments
+        path: test-splits/
 
   test:
-    name: Run Playwright tests (Shard ${{ matrix.shard }})
-    runs-on: ubuntu-latest
-    container:
-        image: mcr.microsoft.com/playwright:v1.51.1-jammy
-    env:
-        HOME: /root
+  needs: controller
+  runs-on: ubuntu-latest
+  container:
+    image: mcr.microsoft.com/playwright:v1.51.1-jammy
+  env:
+    HOME: /root
+  strategy:
+    matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - run: npm ci
 
-    needs: controller
-    strategy:
-      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: test-assignments
+        path: test-splits
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+    - name: Set TESTS env var
+      run: |
+        TESTS=$(cat test-splits/${{ matrix.shard }})
+        echo "TESTS=$TESTS" >> $GITHUB_ENV
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Run assigned tests
+      run: |
+        echo "Running shard ${{ matrix.shard }} on browser ${{ matrix.browser }}"
+        BROWSER=${{ matrix.browser }} \
+        npx playwright test $TESTS --project=${{ matrix.browser }} --config=playwright.config.recipe2.ts
 
-      - name: Download test assignments
-        uses: actions/download-artifact@v4
-        with:
-          name: test-assignments
-          path: test-splits
+    - name: Save report
+      if: always()
+      run: |
+        mkdir -p results-json
+        cp test-results/*.json results-json/ || echo "No JSON report found"
 
-      - name: Debug current shard
-        run: |
-          echo "🔢 Running shard: ${{ matrix.shard }}"
-
-
-      - name: Run assigned testss
-        run: |
-          npx playwright --version
-          TESTS=$(cat test-splits/${{ matrix.shard }})
-          echo "🧪 Running: $TESTS"
-          npx playwright test $TESTS --config=playwright.config.recipe2.ts
-          echo "Exit code: $?"
-
-      - name: Debug test-results folder
-        if: always()
-        run: |
-          ls -lh test-results || echo "❌ test-results folder does not exist"
-
-      - name: Save JSON report
-        if: always()
-        run: |
-          mkdir -p results-json
-          cp test-results/*.json results-json/ || echo "No JSON report found"
-
-      - name: Upload JSON report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-json-${{ matrix.shard }}
-          path: results-json/
-          if-no-files-found: ignore
-
-      - name: Upload test results (raw)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results-${{ matrix.shard }}
-          path: test-results/
-          if-no-files-found: ignore
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
+        path: results-json/
+        if-no-files-found: ignore
 
   merge-reports:
     name: Merge Playwright Reports
