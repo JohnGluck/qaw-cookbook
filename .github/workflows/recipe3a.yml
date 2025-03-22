@@ -75,7 +75,7 @@ jobs:
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
           echo "✅ Matrix content:"
           echo "$matrix"
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "matrix=$(echo "$matrix" | jq -c .)" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v4
         with:
