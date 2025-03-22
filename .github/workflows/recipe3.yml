@@ -122,7 +122,7 @@ jobs:
           echo "TESTS=$TESTS" >> $GITHUB_ENV
 
       - name: Run assigned tests
-        run: npx playwright test $TESTS --config=playwright.config.recipe2.ts
+        run: npx playwright test $TESTS --reporter=json --output=test-results
 
       - name: Save JSON report
         if: always()
