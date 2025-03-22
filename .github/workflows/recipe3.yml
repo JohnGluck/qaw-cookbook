@@ -122,7 +122,7 @@ jobs:
           TESTS=$(cat test-splits/${{ matrix.shard }})
           echo "🧪 Running: $TESTS"
           npx playwright test $TESTS --config=playwright.config.recipe2.ts
-          run: echo "Exit code: $?"
+          echo "Exit code: $?"
 
       - name: Debug test-results folder
         if: always()
