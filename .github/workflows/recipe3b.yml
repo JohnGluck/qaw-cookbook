@@ -91,8 +91,15 @@ jobs:
       - name: Copy blob report
         if: always()
         run: |
-          mkdir -p results-blob/${{ matrix.browser }}-${{ matrix.shard }}
-          cp -r playwright/.playwright/* results-blob/${{ matrix.browser }}-${{ matrix.shard }}/
+          SRC_DIR="blob-results"
+          DEST_DIR="results-blob/${{ matrix.browser }}-${{ matrix.shard }}"
+
+          if [ -d "$SRC_DIR" ] && [ "$(ls -A $SRC_DIR)" ]; then
+            mkdir -p "$DEST_DIR"
+            cp -r $SRC_DIR/* "$DEST_DIR/"
+          else
+            echo "⚠️ No blob report found in $SRC_DIR"
+          fi
 
       - name: Upload report
         if: always()
