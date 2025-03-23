@@ -101,6 +101,9 @@ jobs:
           name: results-json
           path: results-json/
 
+      - name: Debug test-results directory
+        run: ls -R results-json
+
   merge-reports:
     name: Merge Playwright Reports
     needs: run-tests
@@ -119,6 +122,12 @@ jobs:
         with:
           name: results-json
           path: merged-results
+
+      - name: Debug test-results directory
+        run: ls -R results-json
+
+      - name: Debug merged directory
+        run: ls -R merged-results
 
       - name: Merge Playwright reports
         run: |
