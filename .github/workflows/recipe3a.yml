@@ -27,12 +27,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
   controller:
+    name: Generate Test Shards
     runs-on: ubuntu-latest
     needs: check-capacity
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout repository
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -68,6 +71,7 @@ jobs:
           TOTAL_RUNNERS: ${{ needs.check-capacity.outputs.available_runners }}
 # matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
 #  '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+
 
       - name: Generate combined shard-browser matrix
         id: set-matrix
@@ -119,7 +123,8 @@ jobs:
       HOME: /root
 
     strategy:
-      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
+    matrix:
+      include: ${{ fromJson(needs.controller.outputs.matrix) }}
     steps:
       - name: Debug matrix values
         run: |
