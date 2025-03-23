@@ -1,13 +1,13 @@
 name: Adaptive Playwright Tests
-
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
+
+
+
 
 concurrency:
   group: "tests-${{ github.ref }}"
-  cancel-in-progress: false
+  cancel-in-progress: false  # Ensures in-progress jobs complete instead of being canceled
 
 jobs:
   check-capacity:
@@ -19,10 +19,10 @@ jobs:
       - name: Get Current Running Jobs
         id: get-runners
         run: |
-          MAX_RUNNERS=40
+          MAX_RUNNERS=40  # Max allowed in the org
           CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
-          FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
+          FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))  # Ensure at least 5 runners available
           echo "Available runners: $FINAL_COUNT"
           echo "count=$FINAL_COUNT" >> $GITHUB_OUTPUT
         env:
@@ -35,16 +35,18 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Split test files into shards
+      - name: Split tests evenly across runners
         run: |
           mkdir -p test-splits
           find tests -name "*.spec.ts" | sort > all-tests.txt
@@ -52,101 +54,77 @@ jobs:
             echo "❌ No test files found."
             exit 1
           fi
+          TOTAL_RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
+          if [[ -z "$TOTAL_RUNNERS" || "$TOTAL_RUNNERS" -le 0 ]]; then
+            echo "❌ Invalid runner count: $TOTAL_RUNNERS"
+            exit 1
+          fi
           TOTAL_TESTS=$(wc -l < all-tests.txt)
-          RUNNERS=${{ needs.check-capacity.outputs.available_runners }}
-          SPLIT_COUNT=$(( TOTAL_TESTS / RUNNERS + 1 ))
+          SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
           split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
           echo "✅ Created shards:"
           ls -1 test-splits
-
       - name: Upload test splits
         uses: actions/upload-artifact@v4
         with:
           name: test-assignments
           path: test-splits/
 
-      - name: Generate matrix
+      - name: Show test shards
+        run: |
+          echo "Generated shards:"
+          ls -l test-splits
+
+      - name: Generate combined shard-browser matrix
         id: set-matrix
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
-          matrix=$(jq -n --argjson s "$shards" --argjson b '["chromium","firefox","webkit"]' \
-            '[ $s[] as $shard | $b[] as $browser | {shard:$shard, browser:$browser} ]')
+          browsers='["chromium", "firefox", "webkit"]'
+          MATRIX=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]' | jq -c)
+          echo "Generated matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
-          echo "✅ Matrix content:"
-          echo "$matrix" | jq .
-
-          {
-            echo "matrix<<EOF"
-            echo "$matrix"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
 
   test:
-    name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
-    needs: controller
+    name: Run Playwright tests (Shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
+    container:
+        image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    env:
+        HOME: /root
+    needs: controller
     strategy:
       matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - uses: actions/download-artifact@v4
+      - name: Download test assignments
+        uses: actions/download-artifact@v4
         with:
           name: test-assignments
           path: test-splits
 
-      - name: Set TESTS env var
+      - name: Read assigned tests
+        id: load-tests
         run: |
           TESTS=$(cat test-splits/${{ matrix.shard }})
           echo "TESTS=$TESTS" >> $GITHUB_ENV
-
       - name: Run assigned tests
-        run: |
-          echo "Running shard ${{ matrix.shard }} on ${{ matrix.browser }}"
-          npx playwright test $TESTS --project=${{ matrix.browser }} --config=playwright.config.recipe2.ts
+        run: npx playwright test $TESTS
 
-      - name: Save report
+      - name: Upload test results
         if: always()
-        run: |
-          mkdir -p results-json
-          cp test-results/*.json results-json/ || echo "No JSON report found"
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
-          path: results-json/
-          if-no-files-found: ignore
-
-  merge-reports:
-    name: Merge Playwright Reports
-    needs: test
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: results-json-*
-          path: merged-results
-          merge-multiple: true
-
-      - name: Merge Playwright reports
-        run: |
-          npx playwright merge-reports --reporter html ./merged-results
-
-      - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: merged-playwright-report
-          path: playwright-report/
+          name: playwright-results-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 1
