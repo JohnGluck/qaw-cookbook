@@ -13,19 +13,19 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
 
-    env:
-      HOME: /root
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - name: Install dependencies
         run: npm ci
-      - name: Install Playwright
+
+      - name: Install Playwright & deps
         run: npx playwright install --with-deps
 
       - name: Calculate available runners and split tests
@@ -47,17 +47,26 @@ jobs:
           ls test-splits
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Playwright
-        run: npx playwright install --with-deps
+
       - name: Run each shard on each browser
         run: |
+          mkdir -p results-json
           for shard in test-splits/*; do
+            SHARD_NAME=$(basename "$shard")
             for browser in chromium firefox webkit; do
               echo "🧪 Running $shard on $browser"
               TESTS=$(cat "$shard")
               npx playwright test $TESTS --project=$browser --config=playwright.config.recipe2.ts
+              cp -r test-results/. results-json/${browser}-${SHARD_NAME} || echo "No test results found for $browser-$SHARD_NAME"
             done
           done
+
+      - name: Upload all JSON test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-json
+          path: results-json/
 
   merge-reports:
     name: Merge Playwright Reports
@@ -66,16 +75,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - run: npm ci
 
       - uses: actions/download-artifact@v4
         with:
-          pattern: results-json-*
+          name: results-json
           path: merged-results
-          merge-multiple: true
 
       - name: Merge Playwright reports
         run: |
