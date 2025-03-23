@@ -115,18 +115,18 @@ jobs:
 
     strategy:
       matrix:
-          - shard: shard_aa
-            browser: chromium
-          - shard: shard_aa
-            browser: firefox
-          - shard: shard_aa
-            browser: webkit
-          - shard: shard_ab
-            browser: chromium
-          - shard: shard_ab
-            browser: firefox
-          - shard: shard_ab
-            browser: webkit
+      - shard: shard_aa
+        browser: chromium
+      - shard: shard_aa
+        browser: firefox
+      - shard: shard_aa
+        browser: webkit
+      - shard: shard_ab
+        browser: chromium
+      - shard: shard_ab
+        browser: firefox
+      - shard: shard_ab
+        browser: webkit
 
     steps:
       - name: Debug matrix values
