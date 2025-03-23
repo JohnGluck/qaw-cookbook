@@ -69,13 +69,16 @@ jobs:
       - name: Run each shard on each browser
         run: |
           mkdir -p results-json
+
           for shard in test-splits/*; do
             SHARD_NAME=$(basename "$shard")
             for browser in chromium firefox webkit; do
               echo "🧪 Running $shard on $browser"
               TESTS=$(cat "$shard")
 
-              BROWSER="$browser" SHARD="$SHARD_NAME" \
+              export BROWSER="$browser"
+              export SHARD="$SHARD_NAME"
+
               npx playwright test $TESTS --project=$browser --config=playwright.config.recipe2.ts
 
               TARGET=results-json/${browser}-${SHARD_NAME}
