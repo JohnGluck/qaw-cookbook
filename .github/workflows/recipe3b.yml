@@ -75,18 +75,18 @@ jobs:
           echo "Generated shards:"
           ls -l test-splits
 
-      - name: Generate matrix from test splits
+      - name: Generate combined shard-browser matrix
         id: set-matrix
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
           matrix=$(jq -n --argjson s "$shards" --argjson b '["chromium","firefox","webkit"]' \
-            '[ $s[] as $shard | $b[] as $browser | {shard:$shard, browser:$browser} ]' | jq -c)
+            '[ $s[] as $shard | $b[] as $browser | {shard:$shard, browser:$browser} ]')
+          echo "✅ Matrix content:"
+          echo "$matrix" | jq .
 
-          {
-            echo "matrix<<EOF"
-            echo "$matrix"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "$matrix" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   test:
     name: Run Playwright tests (Shard ${{ matrix.shard }})
