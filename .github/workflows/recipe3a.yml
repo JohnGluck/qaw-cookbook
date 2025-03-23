@@ -81,13 +81,13 @@ jobs:
 
               npx playwright test $TESTS --project=$browser --config=playwright.config.recipe2.ts
 
-              TARGET=results-json/${browser}-${SHARD_NAME}
-              mkdir -p "$TARGET"
-              if compgen -G "test-results/*.json" > /dev/null; then
-                cp test-results/*.json "$TARGET/"
+              RESULT_FILE="test-results/results-${BROWSER}-${SHARD}.json"
+              if [[ -f "$RESULT_FILE" ]]; then
+                cp "$RESULT_FILE" results-json/
               else
-                echo "⚠️ No test results found for $browser-$SHARD_NAME"
+                echo "⚠️ No test result file found: $RESULT_FILE"
               fi
+
             done
           done
 
