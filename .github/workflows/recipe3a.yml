@@ -1,9 +1,7 @@
 name: Adaptive Playwright Tests
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: "tests-${{ github.ref }}"
