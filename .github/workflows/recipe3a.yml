@@ -123,9 +123,6 @@ jobs:
           name: results-json
           path: merged-results
 
-      - name: Debug test-results directory
-        run: ls -R results-json
-
       - name: Debug merged directory
         run: ls -R merged-results
 
