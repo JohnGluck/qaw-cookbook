@@ -129,10 +129,12 @@ jobs:
           path: merged-results
 
       - name: Merge Playwright reports
-        working-directory: ${{ github.workspace }}
         run: |
-          ls -lh merged-results
-          npx playwright merge-reports --reporter html merged-results
+          echo "📂 Listing contents of merged-results:"
+          ls -lh "${{ github.workspace }}/merged-results"
+
+          echo "📦 Merging reports..."
+          npx playwright merge-reports --reporter html "${{ github.workspace }}/merged-results"
 
       - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
