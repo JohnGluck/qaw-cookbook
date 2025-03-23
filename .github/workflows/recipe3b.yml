@@ -1,7 +1,10 @@
-
 name: Adaptive Playwright Tests
 on:
   workflow_dispatch:
+
+
+
+
 concurrency:
   group: "tests-${{ github.ref }}"
   cancel-in-progress: false  # Ensures in-progress jobs complete instead of being canceled

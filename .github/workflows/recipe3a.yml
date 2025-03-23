@@ -24,9 +24,9 @@ jobs:
           AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
           FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
           echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
   controller:
     name: Generate Test Shards
@@ -36,7 +36,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
