@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-    controller:
+  controller:
     runs-on: ubuntu-latest
     outputs:
       shard_list: ${{ steps.set-shards.outputs.shard_list }}
@@ -24,7 +24,7 @@ jobs:
           mkdir -p test-splits
           find tests -name "*.spec.ts" | sort > all-tests.txt
           TOTAL_TESTS=$(wc -l < all-tests.txt)
-          TOTAL_RUNNERS=4  # or dynamic logic to count runners
+          TOTAL_RUNNERS=4  # Replace or compute dynamically
           SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
 
           split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
@@ -32,10 +32,9 @@ jobs:
           shards=$(ls test-splits | sort)
           shard_array=""
           for shard in $shards; do
-            shard_array+="$shard,"
+            shard_array+="\"$shard\","
           done
 
-          # Remove trailing comma and wrap in brackets
           shard_list="[${shard_array%,}]"
           echo "🧪 Shards: $shard_list"
           echo "shard_list=$shard_list" >> $GITHUB_OUTPUT
@@ -45,20 +44,21 @@ jobs:
           name: test-splits
           path: test-splits/
 
-    test:
-      needs: controller
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
-          browser: [chromium, firefox, webkit]
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/download-artifact@v4
-          with:
-            name: test-splits
-            path: test-splits
+  test:
+    needs: controller
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: Debug
-          run: |
-            echo "Running ${{ matrix.shard }} on ${{ matrix.browser }}"
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-splits
+          path: test-splits
+
+      - name: Debug
+        run: |
+          echo "Running ${{ matrix.shard }} on ${{ matrix.browser }}"
