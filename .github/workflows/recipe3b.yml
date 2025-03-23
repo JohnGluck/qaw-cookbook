@@ -45,20 +45,60 @@ jobs:
           path: test-splits/
 
   test:
+    name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
     needs: controller
     runs-on: ubuntu-latest
     strategy:
       matrix:
         shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
         browser: [chromium, firefox, webkit]
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright & dependencies
+        run: npx playwright install --with-deps
+
+      - name: Download test shard
+        uses: actions/download-artifact@v4
         with:
           name: test-splits
           path: test-splits
 
-      - name: Debug
+      - name: Set TESTS env var
         run: |
-          echo "Running ${{ matrix.shard }} on ${{ matrix.browser }}"
+          TESTS=$(cat test-splits/${{ matrix.shard }})
+          echo "TESTS=$TESTS" >> $GITHUB_ENV
+
+      - name: Run Playwright tests
+        run: |
+          echo "▶️ Running ${{ matrix.shard }} on ${{ matrix.browser }}"
+          BROWSER=${{ matrix.browser }}
+          SHARD=${{ matrix.shard }}
+          npx playwright test $TESTS \
+            --project=$BROWSER \
+            --config=playwright.config.recipe3.ts
+
+      - name: Copy JSON report
+        if: always()
+        run: |
+          RESULT_FILE="test-results/results-${{ matrix.browser }}-${{ matrix.shard }}.json"
+          mkdir -p results-json
+          cp "$RESULT_FILE" results-json/report.json || echo "⚠️ No report found for ${{ matrix.browser }}-${{ matrix.shard }}"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
+          path: results-json/
+          if-no-files-found: ignore
