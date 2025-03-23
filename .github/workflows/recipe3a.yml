@@ -75,9 +75,12 @@ jobs:
           matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
             '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
 
-          # Compact the matrix and escape for GitHub output
-          compact=$(echo "$matrix" | jq -c .)
-          echo "matrix=${compact}" >> $GITHUB_OUTPUT
+          echo "✅ Matrix content:"
+          echo "$matrix" | jq .
+
+          echo "matrix<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$matrix" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
 
       - name: Debug matrix output
