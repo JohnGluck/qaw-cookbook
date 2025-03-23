@@ -118,8 +118,8 @@ jobs:
       HOME: /root
 
     strategy:
-      matrix:[{"shard":"shard_aa","browser":"chromium"},{"shard":"shard_aa","browser":"firefox"},{"shard":"shard_aa","browser":"webkit"},{"shard":"shard_ab","browser":"chromium"},{"shard":"shard_ab","browser":"firefox"},{"shard":"shard_ab","browser":"webkit"}]"
-
+      matrix:
+        include: ${{ fromJson(needs.controller.outputs.matrix) }}
     steps:
       - name: Debug matrix values
         run: |
