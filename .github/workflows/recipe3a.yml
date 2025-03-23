@@ -109,26 +109,30 @@ jobs:
     needs: run-tests
     if: always()
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - uses: actions/download-artifact@v4
+      - name: Download JSON reports
+        uses: actions/download-artifact@v4
         with:
           name: results-json
           path: merged-results
 
-      - name: Debug merged directory
-        run: ls -R merged-results
-
       - name: Merge Playwright reports
+        working-directory: ${{ github.workspace }}
         run: |
-          npx playwright merge-reports --reporter html ./merged-results
+          ls -lh merged-results
+          npx playwright merge-reports --reporter html merged-results
 
       - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
