@@ -84,9 +84,11 @@ jobs:
           echo "✅ Matrix content:"
           echo "$matrix" | jq .
 
-          echo "matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "$matrix" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo 'matrix<<EOF'
+            echo "$matrix"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
 
   test:
     name: Run Playwright tests (Shard ${{ matrix.shard }})
