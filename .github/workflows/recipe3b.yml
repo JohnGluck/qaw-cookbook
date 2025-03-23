@@ -74,6 +74,7 @@ jobs:
         run: |
           echo "Generated shards:"
           ls -l test-splits
+
       - name: Generate matrix from test splits
         id: set-matrix
         run: |
