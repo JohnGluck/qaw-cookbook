@@ -25,8 +25,12 @@ export default defineConfig({
   reporter: [
     ['json', {
       outputFile: `test-results/results-${process.env.BROWSER || 'default'}-${process.env.SHARD || '0'}.json`
+    }],
+    ['html', {
+      outputFolder: `test-results/results-${process.env.BROWSER || 'default'}-${process.env.SHARD || '0'}`,
+      open: 'never'
     }]
-  ],
+  ]
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
