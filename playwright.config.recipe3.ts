@@ -30,7 +30,7 @@ export default defineConfig({
       outputFolder: `test-results/results-${process.env.BROWSER || 'default'}-${process.env.SHARD || '0'}`,
       open: 'never'
     }]
-  ]
+  ],
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
