@@ -79,11 +79,11 @@ jobs:
               export BROWSER="$browser"
               export SHARD="$SHARD_NAME"
 
-              npx playwright test $TESTS --project=$browser --config=playwright.config.recipe2.ts
+              npx playwright test $TESTS --project=$browser --config=playwright.config.recipe3.ts
               echo 'ls test results'
               ls test-results
               wc | ls test-results
-            
+
               RESULT_FILE="test-results/results-${BROWSER}-${SHARD}.json"
               if [[ -f "$RESULT_FILE" ]]; then
                 cp "$RESULT_FILE" results-json/
