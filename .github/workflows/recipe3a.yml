@@ -132,7 +132,7 @@ jobs:
       - name: Merge Playwright reports
         run: |
           echo "📂 Listing contents of merged-results:"
-          ls -lh "${{ github.workspace }}/merged-results"
+          ls -lRh "${{ github.workspace }}/merged-results"
 
           echo "📦 Merging reports..."
           npx playwright merge-reports --reporter html "${{ github.workspace }}/merged-results"
