@@ -74,8 +74,17 @@ jobs:
             for browser in chromium firefox webkit; do
               echo "🧪 Running $shard on $browser"
               TESTS=$(cat "$shard")
+
+              BROWSER="$browser" SHARD="$SHARD_NAME" \
               npx playwright test $TESTS --project=$browser --config=playwright.config.recipe2.ts
-              cp -r test-results/. results-json/${browser}-${SHARD_NAME} || echo "No test results found for $browser-$SHARD_NAME"
+
+              TARGET=results-json/${browser}-${SHARD_NAME}
+              mkdir -p "$TARGET"
+              if compgen -G "test-results/*.json" > /dev/null; then
+                cp test-results/*.json "$TARGET/"
+              else
+                echo "⚠️ No test results found for $browser-$SHARD_NAME"
+              fi
             done
           done
 
