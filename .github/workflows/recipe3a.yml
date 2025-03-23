@@ -72,7 +72,7 @@ jobs:
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
           browsers='["chromium", "firefox", "webkit"]'
-          matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]' | jq -c)
+          matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
 
