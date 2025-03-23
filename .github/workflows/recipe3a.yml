@@ -12,8 +12,7 @@ concurrency:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+
     env:
       HOME: /root
     steps:
@@ -27,6 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
 
       - name: Calculate available runners and split tests
         id: split
@@ -47,7 +47,8 @@ jobs:
           ls test-splits
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Install Playwright
+        run: npx playwright install --with-deps
       - name: Run each shard on each browser
         run: |
           for shard in test-splits/*; do
