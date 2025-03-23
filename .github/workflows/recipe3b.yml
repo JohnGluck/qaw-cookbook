@@ -78,9 +78,15 @@ jobs:
       - name: Generate matrix from test splits
         id: set-matrix
         run: |
-          MATRIX=$(ls test-splits | jq -R -s -c '{shard: split("\n")[:-1]}')
-          echo "Generated matrix: $MATRIX"
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
+          matrix=$(jq -n --argjson s "$shards" --argjson b '["chromium","firefox","webkit"]' \
+            '[ $s[] as $shard | $b[] as $browser | {shard:$shard, browser:$browser} ]' | jq -c)
+
+          {
+            echo "matrix<<EOF"
+            echo "$matrix"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
   test:
     name: Run Playwright tests (Shard ${{ matrix.shard }})
