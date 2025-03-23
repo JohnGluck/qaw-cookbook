@@ -106,7 +106,7 @@ jobs:
 
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
-    needs: controller
+    #needs: controller
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
