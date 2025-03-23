@@ -86,8 +86,7 @@ jobs:
 
               RESULT_FILE="test-results/results-${BROWSER}-${SHARD}.json"
               if [[ -f "$RESULT_FILE" ]]; then
-                mkdir -p results-json/${browser}-${SHARD}
-                cp "$RESULT_FILE" results-json/${browser}-${SHARD}/report.json
+                cp "$RESULT_FILE" results-json/${browser}-${SHARD}-report.json
               else
                 echo "⚠️ No test result file found: $RESULT_FILE"
               fi
