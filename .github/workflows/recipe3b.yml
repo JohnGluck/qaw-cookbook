@@ -88,17 +88,16 @@ jobs:
             --project=$BROWSER \
             --config=playwright.config.recipe3.ts
 
-      - name: Copy JSON report
+      - name: Copy blob report
         if: always()
         run: |
-          RESULT_FILE="test-results/results-${{ matrix.browser }}-${{ matrix.shard }}.json"
-          mkdir -p results-json
-          cp "$RESULT_FILE" results-json/report.json || echo "⚠️ No report found for ${{ matrix.browser }}-${{ matrix.shard }}"
+          mkdir -p results-blob/${{ matrix.browser }}-${{ matrix.shard }}
+          cp -r playwright/.playwright/* results-blob/${{ matrix.browser }}-${{ matrix.shard }}/
 
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: results-json-${{ matrix.browser }}-${{ matrix.shard }}
-          path: results-json/
+          name: results-blob-${{ matrix.browser }}-${{ matrix.shard }}
+          path: results-blob/
           if-no-files-found: ignore
