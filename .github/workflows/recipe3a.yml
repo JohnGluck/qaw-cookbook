@@ -72,8 +72,12 @@ jobs:
         run: |
           shards=$(ls test-splits | jq -R -s -c 'split("\n")[:-1]')
           browsers='["chromium", "firefox", "webkit"]'
-          matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          matrix=$(jq -n --argjson s "$shards" --argjson b "$browsers" \
+            '[ $s[] as $shard | $b[] as $browser | { shard: $shard, browser: $browser } ]')
+
+          # Compact the matrix and escape for GitHub output
+          compact=$(echo "$matrix" | jq -c .)
+          echo "matrix=${compact}" >> $GITHUB_OUTPUT
 
 
       - name: Debug matrix output
@@ -114,20 +118,7 @@ jobs:
       HOME: /root
 
     strategy:
-      matrix:
-        include:
-          - shard: shard_aa
-            browser: chromium
-          - shard: shard_aa
-            browser: firefox
-          - shard: shard_aa
-            browser: webkit
-          - shard: shard_ab
-            browser: chromium
-          - shard: shard_ab
-            browser: firefox
-          - shard: shard_ab
-            browser: webkit
+      matrix: ${{ fromJson(needs.controller.outputs.matrix) }}
 
     steps:
       - name: Debug matrix values
