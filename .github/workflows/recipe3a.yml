@@ -123,8 +123,8 @@ jobs:
       HOME: /root
 
     strategy:
-    matrix:
-      include: ${{ fromJson(needs.controller.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJson(needs.controller.outputs.matrix) }}
     steps:
       - name: Debug matrix values
         run: |
