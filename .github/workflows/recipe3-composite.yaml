@@ -62,4 +62,23 @@ jobs:
     strategy:
       matrix:
         shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
-       
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test shard on browser
+        uses: ./actions/run-shard
+        with:
+          shard: ${{ matrix.shard }}
+          browser: ${{ matrix.browser }}
+
+  merge-reports:
+    name: Merge Playwright Reports
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge reports
+        uses: ./actions/merge-reports
