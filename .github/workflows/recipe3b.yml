@@ -124,10 +124,20 @@ jobs:
           path: merged-results
           merge-multiple: true
 
+      - name: Debug copied reports
+        run: |
+          echo "📂 Contents of flat-results:"
+          ls -lh merged-results
+
       - name: Flatten reports
         run: |
           mkdir flat-results
           find merged-results -name "*.json" -exec cp {} flat-results/ \;
+
+      - name: Debug flattened reports
+        run: |
+          echo "📂 Contents of flat-results:"
+          ls -lh flat-results
 
       - name: Merge Playwright reports
         run: npx playwright merge-reports --reporter html flat-results
