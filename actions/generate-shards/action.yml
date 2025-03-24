@@ -16,6 +16,11 @@ runs:
         TOTAL_TESTS=$(wc -l < all-tests.txt)
 
         TOTAL_RUNNERS="${{ inputs.total-runners }}"
+        echo "TOTAL_RUNNERS=$TOTAL_RUNNERS"
+        if [ -z "$TOTAL_RUNNERS" ] || [ "$TOTAL_RUNNERS" -eq 0 ]; then
+          echo "❌ TOTAL_RUNNERS is empty or zero"
+          exit 1
+        fi
         SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
 
         split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
