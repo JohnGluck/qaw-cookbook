@@ -1,0 +1,27 @@
+name: Matrix-Based Test Distribution
+description: Splits Playwright tests into shards using GitHub Actions matrix
+
+inputs: {}
+
+outputs:
+  matrix:
+    description: "Test distribution matrix"
+    value: ${{ steps.set-matrix.outputs.matrix }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: List all Playwright test files
+      id: generate-test-list
+      run: |
+        TEST_FILES=$(npx playwright list-files --json | jq -c '[.[] | .name]')
+        echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Split tests into groups
+      id: set-matrix
+      run: |
+        TEST_FILES='${{ steps.generate-test-list.outputs.test_files }}'
+        TEST_GROUPS=$(echo "$TEST_FILES" | jq -c '._nwise(4)')
+        echo "matrix=$TEST_GROUPS" >> $GITHUB_OUTPUT
+      shell: bash
