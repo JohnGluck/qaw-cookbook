@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Choose Test Distribution Strategy
-        uses: ./.github/actions/round-robin  # Change this line to switch strategies
+        uses: ./.github/actions/distribution/round-robin  # Change this line to switch strategies
   test-runner:
     name: Run Playwright Tests
     needs: generate-matrix
