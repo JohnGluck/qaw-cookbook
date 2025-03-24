@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check capacity
-        id: check
+        id: check-capacity
         uses: ./actions/check-capacity
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -36,7 +36,7 @@ jobs:
         id: set-shards
         uses: ./actions/generate-shards
         with:
-          total-runners: ${{ needs.check-capacity.outputs.capacity }}
+          total-runners: ${{ needs.check.outputs.capacity }}
 
       - name: Read shard list output
         id: set-output
