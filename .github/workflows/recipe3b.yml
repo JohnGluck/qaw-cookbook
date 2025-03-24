@@ -124,8 +124,13 @@ jobs:
           path: merged-results
           merge-multiple: true
 
+      - name: Flatten reports
+        run: |
+          mkdir flat-results
+          find merged-results -name "*.json" -exec cp {} flat-results/ \;
+
       - name: Merge Playwright reports
-        run: npx playwright merge-reports --reporter html merged-results
+        run: npx playwright merge-reports --reporter html flat-results
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
