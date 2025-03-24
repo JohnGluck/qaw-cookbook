@@ -1,17 +1,22 @@
-jobs:
-  check-capacity:
-    name: Check Available Runners
-    runs-on: ubuntu-latest
-    outputs:
-      available_runners:
-    steps:
-      - name: Get Available Runners
-        id: get-runners
-        run: |
-          MAX_RUNNERS=40  # Or however many your org allows
-          CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo "$GITHUB_REPOSITORY" | jq '[.[] | select(.status == "in_progress")] | length')
-          AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
-          FINAL_COUNT=$((AVAILABLE > 1 ? AVAILABLE : 1))  # Fallback to at least 1 runner
-          echo "count=$FINAL_COUNT" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+name: "Check GitHub Runner Capacity"
+description: "Check how many runners are available"
+inputs:
+  github-token:
+    description: "GitHub token to call the API"
+    required: true
+outputs:
+  available_runners:
+    description: "Number of available runners"
+runs:
+  using: "composite"
+  steps:
+    - id: get-capacity
+      run: |
+        MAX_RUNNERS=40
+        CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
+        AVAILABLE=$((MAX_RUNNERS - CURRENT_RUNNING))
+        FINAL_COUNT=$((AVAILABLE > 5 ? AVAILABLE : 5))
+        echo "available_runners=$FINAL_COUNT" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}

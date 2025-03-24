@@ -15,11 +15,14 @@ jobs:
     outputs:
       capacity: ${{ steps.check.outputs.available_runners }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Check available runners
+      - name: Check capacity
         id: check
         uses: ./actions/check-capacity
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   controller:
     runs-on: ubuntu-latest
