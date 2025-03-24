@@ -35,8 +35,8 @@ jobs:
     needs: controller
     runs-on: ubuntu-latest
     steps:
-      - run: | 
-        echo "🔍 SHARD LIST: ${{ needs.controller.outputs.shard_list }}"
+      - run: |
+          echo "🔍 SHARD LIST: ${{ needs.controller.outputs.shard_list }}"
 
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
