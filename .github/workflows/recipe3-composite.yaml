@@ -36,7 +36,7 @@ jobs:
         id: set-shards
         uses: ./actions/generate-shards
         with:
-          total-runners: ${{ needs.check.outputs.capacity }}
+          total-runners: ${{ needs.check-capacity.outputs.capacity }}
 
       - name: Read shard list output
         id: set-output
