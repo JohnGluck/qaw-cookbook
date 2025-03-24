@@ -24,5 +24,6 @@ runs:
         done
 
         shard_list="[${shard_array%,}]"
-        echo "shard_list=$shard_list" >> $GITHUB_OUTPUT
+        echo "$shard_list" > shard-list.txt
+               
       shell: bash
