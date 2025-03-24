@@ -91,6 +91,7 @@ jobs:
       - name: Copy JSON report
         if: always()
         run: |
+          rm -rf merged-results
           mkdir -p merged-results
           cp test-results/report.json merged-results/${{ matrix.browser }}-${{ matrix.shard }}.json
 
@@ -98,10 +99,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: merged-results
+          name: merged-results-${{ matrix.browser }}-${{ matrix.shard }}
           path: merged-results/
           if-no-files-found: ignore
-          
+
   merge-reports:
     name: Merge Playwright Reports
     needs: test
@@ -119,8 +120,9 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: merged-results
+          pattern: merged-results-*
           path: merged-results
+          merge-multiple: true
 
       - name: Merge Playwright reports
         run: npx playwright merge-reports --reporter html merged-results
