@@ -11,15 +11,9 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: List all Playwright test files
-      id: generate-test-list
-      run: |
-        TEST_FILES=$(find tests -type f -name "*.spec.ts" | jq -R -s -c 'split("\n")[:-1]')
-        echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Split tests into groups
+    - name: Generate and split test list into shards
       id: set-matrix
+      shell: bash
       run: |
         NUM_SHARDS=4
 
@@ -36,4 +30,5 @@ runs:
               ]
             ]
         ')
-      shell: bash
+
+        echo "matrix=$SHARD_MATRIX" >> "$GITHUB_OUTPUT"
