@@ -92,7 +92,11 @@ jobs:
         if: always()
         run: |
           mkdir -p merged-results
-          cp .playwright/*.zip merged-results/${{ matrix.browser }}-${{ matrix.shard }}.zip
+          echo "ls"
+          ls
+          ls .playwright
+          ls .playwright/blob-report
+          cp .playwright/blob-report/*.zip merged-results/${{ matrix.browser }}-${{ matrix.shard }}.zip
 
       - name: Upload report
         if: always()
@@ -140,7 +144,7 @@ jobs:
 
       - name: Merge Playwright reports
         run: npx playwright merge-reports --reporter html flat-results
-        
+
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
