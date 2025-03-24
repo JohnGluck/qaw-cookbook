@@ -13,7 +13,7 @@ jobs:
   check-capacity:
     runs-on: ubuntu-latest
     outputs:
-      capacity: ${{ steps.check.outputs.available_runners }}
+      capacity: ${{ steps.check-capacity.outputs.available_runners }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

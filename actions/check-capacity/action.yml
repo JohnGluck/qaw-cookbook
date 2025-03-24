@@ -10,7 +10,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - id: get-capacity
+    - id: check-capacity
       run: |
         MAX_RUNNERS=40
         CURRENT_RUNNING=$(gh run list --limit $MAX_RUNNERS --json status --repo $GITHUB_REPOSITORY | jq '[.[] | select(.status == "in_progress")] | length')
