@@ -107,6 +107,7 @@ jobs:
     needs: test
     if: always()
     runs-on: ubuntu-latest
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -119,7 +120,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          pattern: merged-results-*
+          pattern: blob-report-*
           path: merged-results
           merge-multiple: true
 
