@@ -1,0 +1,13 @@
+name: Tag-Based Test Distribution
+description: Runs Playwright tests based on tags (@smoke, @regression, etc.)
+outputs:
+  matrix:
+    description: "Test tag matrix"
+    value: ${{ steps.set-matrix.outputs.matrix }}
+runs:
+  using: "composite"
+  steps:
+    - name: Define test groups
+      id: set-matrix
+      run: |
+        echo 'matrix={"tag":["@smoke", "@regression", "@e2e"]}' >> $GITHUB_ENV #here’s where you declare which tags to use

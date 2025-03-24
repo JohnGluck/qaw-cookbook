@@ -21,7 +21,19 @@ runs:
     - name: Split tests into groups
       id: set-matrix
       run: |
-        TEST_FILES='${{ steps.generate-test-list.outputs.test_files }}'
-        TEST_GROUPS=$(echo "$TEST_FILES" | jq -c '._nwise(4)')
-        echo "matrix=$TEST_GROUPS" >> $GITHUB_OUTPUT
+        NUM_SHARDS=4
+
+        TEST_FILES=$(find tests -type f -name "*.spec.ts" | jq -R -s -c 'split("\n")[:-1]')
+
+        SHARD_MATRIX=$(echo "$TEST_FILES" | jq -c --argjson n "$NUM_SHARDS" '
+          . as $all
+          | ($all | length) as $total
+          | [range(0; $n) |
+              $all[
+                ((. * $total) / $n | floor)
+                :
+                (((. + 1) * $total) / $n | floor)
+              ]
+            ]
+        ')
       shell: bash
