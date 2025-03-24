@@ -30,5 +30,5 @@ runs:
               ]
             ]
         ')
-
+        echo $SHARD_MATRIX
         echo "matrix=$SHARD_MATRIX" >> "$GITHUB_OUTPUT"
