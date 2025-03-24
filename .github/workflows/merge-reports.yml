@@ -1,0 +1,29 @@
+name: "Merge Blob Reports"
+description: "Download all blob reports and generate merged HTML report"
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - run: npm ci
+      shell: bash
+
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: blob-report-*
+        path: blob-report
+        merge-multiple: true
+
+    - run: |
+        echo "📦 Merging reports..."
+        npx playwright merge-reports --reporter html blob-report
+      shell: bash
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: merged-playwright-report
+        path: playwright-report/

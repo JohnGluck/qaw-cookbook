@@ -1,0 +1,33 @@
+name: "Generate Playwright Shards"
+description: "Split tests and create a JSON array of shard names"
+inputs:
+  total-runners:
+    description: "Number of runners to split against"
+    required: true
+outputs:
+  shard_list:
+    description: "JSON array of test shard filenames"
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        mkdir -p test-splits
+        find tests -name "*.spec.ts" | sort > all-tests.txt
+        TOTAL_TESTS=$(wc -l < all-tests.txt)
+        SPLIT_COUNT=$(( TOTAL_TESTS / ${{ inputs.total-runners }} + 1 ))
+        split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
+
+        shards=$(ls test-splits | sort)
+        shard_array=""
+        for shard in $shards; do
+          shard_array+="\"$shard\","  # escape quotes
+        done
+
+        shard_list="[${shard_array%,}]"
+        echo "shard_list=$shard_list" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: test-splits
+        path: test-splits/

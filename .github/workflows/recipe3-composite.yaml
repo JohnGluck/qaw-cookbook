@@ -1,0 +1,60 @@
+name: Adaptive Playwright Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: "tests-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    outputs:
+      shard_list: ${{ steps.set-shards.outputs.shard_list }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate shard list
+        id: set-shards
+        uses: ./generate-shards.yml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-splits
+          path: test-splits/
+
+  test:
+    name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
+    needs: controller
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    env:
+      HOME: /root
+    strategy:
+      matrix:
+        shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test shard on browser
+        uses: ./run-shard.yml
+        with:
+          shard: ${{ matrix.shard }}
+          browser: ${{ matrix.browser }}
+
+  merge-reports:
+    name: Merge Playwright Reports
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge reports
+        uses: ./merge-reports.yml

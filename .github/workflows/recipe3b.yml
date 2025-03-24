@@ -1,9 +1,6 @@
 name: Adaptive Playwright Tests
 
-on:
-  push:
-    branches: [main]
-  pull_request:
+on: workflow_dispatch
 
 concurrency:
   group: "tests-${{ github.ref }}"
@@ -42,7 +39,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: test-splits
-          path: test-splits/
+          path: test-splits/mv
 
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
@@ -51,7 +48,7 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
     env:
-      HOME: /root      
+      HOME: /root
     strategy:
       matrix:
         shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
