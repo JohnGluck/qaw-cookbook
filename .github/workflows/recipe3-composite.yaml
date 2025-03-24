@@ -20,7 +20,7 @@ jobs:
 
       - name: Generate shard list
         id: set-shards
-        uses: generate-shards
+        uses: ./generate-shards
 
       - uses: actions/upload-artifact@v4
         with:
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run test shard on browser
-        uses: run-shard
+        uses: ./run-shard
         with:
           shard: ${{ matrix.shard }}
           browser: ${{ matrix.browser }}
@@ -57,4 +57,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge reports
-        uses: merge-reports
+        uses: ./merge-reports
