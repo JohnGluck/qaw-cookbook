@@ -26,8 +26,3 @@ runs:
         shard_list="[${shard_array%,}]"
         echo "shard_list=$shard_list" >> $GITHUB_OUTPUT
       shell: bash
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: test-splits
-        path: test-splits/
