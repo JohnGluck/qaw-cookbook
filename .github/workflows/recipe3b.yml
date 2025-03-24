@@ -88,26 +88,19 @@ jobs:
             --project=$BROWSER \
             --config=playwright.config.recipe3.ts
 
-      - name: Copy blob report
+      - name: Copy JSON report
         if: always()
         run: |
-          SRC_DIR="blob-results"
-          DEST_DIR="results-blob/${{ matrix.browser }}-${{ matrix.shard }}"
+          mkdir -p merged-results
+          cp test-results/report.json merged-results/${{ matrix.browser }}-${{ matrix.shard }}.json
 
-          if [ -d "$SRC_DIR" ] && [ "$(ls -A $SRC_DIR)" ]; then
-            mkdir -p "$DEST_DIR"
-            cp -r $SRC_DIR/* "$DEST_DIR/"
-          else
-            echo "⚠️ No blob report found in $SRC_DIR"
-          fi
-
-      - name: Upload report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-blob-${{ matrix.browser }}-${{ matrix.shard }}
-          path: results-blob/
-          if-no-files-found: ignore
+            - name: Upload report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: results-blob-${{ matrix.browser }}-${{ matrix.shard }}
+                path: results-blob/
+                if-no-files-found: ignore
 
   merge-reports:
     name: Merge Playwright Reports
@@ -124,22 +117,13 @@ jobs:
 
       - run: npm ci
 
-      - name: Download all blob results
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          pattern: results-blob-*
+          name: merged-results
           path: merged-results
-          merge-multiple: true
 
-      - name: Debug merged-results folder
-        run: |
-          echo "📂 Listing contents of merged-results:"
-          find merged-results -type f
-
-      - name: Merge reports
-        run: |
-          echo "📦 Merging reports..."
-          npx playwright merge-reports --reporter html merged-results
+      - name: Merge Playwright reports
+        run: npx playwright merge-reports --reporter html merged-results
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
