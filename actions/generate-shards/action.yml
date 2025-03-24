@@ -15,10 +15,7 @@ runs:
         find tests -name "*.spec.ts" | sort > all-tests.txt
         TOTAL_TESTS=$(wc -l < all-tests.txt)
 
-        # Pull GitHub input into a shell variable
         TOTAL_RUNNERS="${{ inputs.total-runners }}"
-
-        # Use shell variable in arithmetic expression
         SPLIT_COUNT=$(( TOTAL_TESTS / TOTAL_RUNNERS + 1 ))
 
         split -l $SPLIT_COUNT all-tests.txt test-splits/shard_
@@ -29,4 +26,10 @@ runs:
           shard_array+="\"$shard\","
         done
 
+        shard_list="[${shard_array%,}]"
+        echo "$shard_list" > shard-list.txt
+      shell: bash
+
+    - id: emit-shards
+      run: echo "shard_list=$(cat shard-list.txt)" >> $GITHUB_OUTPUT
       shell: bash

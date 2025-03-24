@@ -10,17 +10,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check-capacity:
+    runs-on: ubuntu-latest
+    outputs:
+      capacity: ${{ steps.check.outputs.available_runners }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check available runners
+        id: check
+        uses: ./actions/check-capacity
+
   controller:
     runs-on: ubuntu-latest
+    needs: check-capacity
     outputs:
       shard_list: ${{ steps.set-shards.outputs.shard_list }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Generate shard list
         id: set-shards
         uses: ./actions/generate-shards
+        with:
+          total-runners: ${{ needs.check-capacity.outputs.capacity }}
 
       - name: Read shard list output
         id: set-output
@@ -49,23 +62,4 @@ jobs:
     strategy:
       matrix:
         shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
-        browser: [chromium, firefox, webkit]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run test shard on browser
-        uses: ./actions/run-shard
-        with:
-          shard: ${{ matrix.shard }}
-          browser: ${{ matrix.browser }}
-
-  merge-reports:
-    name: Merge Playwright Reports
-    needs: test
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Merge reports
-        uses: ./actions/merge-reports
+       
