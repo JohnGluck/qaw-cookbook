@@ -48,6 +48,8 @@ jobs:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
     needs: controller
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
     strategy:
       matrix:
         shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
