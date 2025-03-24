@@ -14,7 +14,7 @@ runs:
     - name: List all Playwright test files
       id: generate-test-list
       run: |
-        TEST_FILES=$(npx playwright list-files --json | jq -c '[.[] | .name]')
+        TEST_FILES=$(find tests -type f -name "*.spec.ts" | jq -R -s -c 'split("\n")[:-1]')
         echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
       shell: bash
 
