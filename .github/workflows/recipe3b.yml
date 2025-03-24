@@ -88,12 +88,11 @@ jobs:
             --project=$BROWSER \
             --config=playwright.config.recipe3.ts
 
-      - name: Copy JSON report
+      - name: Copy blob report
         if: always()
         run: |
-          rm -rf merged-results
           mkdir -p merged-results
-          cp test-results/report.json merged-results/${{ matrix.browser }}-${{ matrix.shard }}.json
+          cp .playwright/*.zip merged-results/${{ matrix.browser }}-${{ matrix.shard }}.zip
 
       - name: Upload report
         if: always()
@@ -131,8 +130,8 @@ jobs:
 
       - name: Flatten reports
         run: |
-          mkdir flat-results
-          find merged-results -name "*.json" -exec cp {} flat-results/ \;
+          mkdir -p flat-results
+          find merged-results -name "*.zip" -exec cp {} flat-results/ \;
 
       - name: Debug flattened reports
         run: |
@@ -141,6 +140,7 @@ jobs:
 
       - name: Merge Playwright reports
         run: npx playwright merge-reports --reporter html flat-results
+        
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
