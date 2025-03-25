@@ -9,18 +9,18 @@ jobs:
     name: Generate Test Distribution
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_b64: ${{ steps.set-matrix.outputs.matrix_b64 }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Choose Test Distribution Strategy
-        id: set-matrix 
+        id: set-matrix
         uses: ./actions/distribution/round-robin  # Change this line to switch strategies
   test-runner:
     name: Run Playwright Tests
     needs: generate-matrix
     strategy:
-      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      include: ${{ fromJson(fromBase64(needs.generate-matrix.outputs.matrix_b64)) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

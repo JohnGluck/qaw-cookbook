@@ -35,16 +35,13 @@ runs:
               ]
             ]
         ')
-        CLEANED_MATRIX=$(echo "$SHARD_MATRIX" | jq -c '[.[] | select(length > 0)]')
+        ENCODED=$(echo "$CLEANED_MATRIX" | base64 -w 0)
+
         {
-          echo "matrix<<EOF"
-          echo "$CLEANED_MATRIX"
+          echo "matrix_b64<<EOF"
+          echo "$ENCODED"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
-        echo " echo $ GITHUB_OUTPUT "
-        echo $GITHUB_OUTPUT
-        echo " cat GITHUB_OUTPUT "
-        cat "$GITHUB_OUTPUT"
         trap 'cat $GITHUB_OUTPUT' EXIT
 
     - name: Debug matrix
