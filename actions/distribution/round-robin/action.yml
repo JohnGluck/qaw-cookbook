@@ -36,8 +36,12 @@ runs:
             ]
         ')
         CLEANED_MATRIX=$(echo "$SHARD_MATRIX" | jq -c '[.[] | select(length > 0)]')
-        echo $CLEANED_MATRIX
-        echo "matrix=$CLEANED_MATRIX" >> "$GITHUB_OUTPUT"
+        {
+          echo "matrix<<EOF"
+          echo "$CLEANED_MATRIX"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        echo $GITHUB_OUTPUT
         trap 'cat $GITHUB_OUTPUT' EXIT
 
     - name: Debug matrix
