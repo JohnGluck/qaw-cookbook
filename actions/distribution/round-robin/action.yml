@@ -36,7 +36,7 @@ runs:
             ]
         ')
         CLEANED_MATRIX=$(echo "$SHARD_MATRIX" | jq -c '[.[] | select(length > 0)] | map({ testFile: . })')
-        ESCAPED=$(printf '%s\n' "$CLEANED_MATRIX" | jq -Rs .)
+        ESCAPED=$(printf '%s' "$CLEANED_MATRIX" | jq -Rs .)
         echo "matrix=$ESCAPED" >> "$GITHUB_OUTPUT"
         echo 'cat GITHUB_OUTPUT'
         cat $GITHUB_OUTPUT
