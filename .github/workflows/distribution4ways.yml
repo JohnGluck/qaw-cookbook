@@ -9,7 +9,7 @@ jobs:
     name: Generate Test Distribution
     runs-on: ubuntu-latest
     outputs:
-      matrix_b64: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
