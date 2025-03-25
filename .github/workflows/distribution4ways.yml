@@ -20,7 +20,7 @@ jobs:
     name: Run Playwright Tests
     needs: generate-matrix
     strategy:
-      include: ${{ fromJson(fromBase64(needs.generate-matrix.outputs.matrix_b64)) }}
+      matrix: ${{ fromJson(fromBase64(needs.generate-matrix.outputs.matrix_b64)) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
