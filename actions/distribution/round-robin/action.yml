@@ -18,6 +18,11 @@ runs:
         NUM_SHARDS=4
 
         TEST_FILES=$(find tests -type f -name "*.spec.ts" | jq -R -s -c 'split("\n")[:-1]')
+        if [ -z "$TEST_FILES" ] || [ "$TEST_FILES" = "[]" ]; then
+          echo "⚠️ No test files found"
+          echo "matrix=[]" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
         SHARD_MATRIX=$(echo "$TEST_FILES" | jq -c --argjson n "$NUM_SHARDS" '
           . as $all
@@ -30,5 +35,6 @@ runs:
               ]
             ]
         ')
-        echo $SHARD_MATRIX
-        echo "matrix=$SHARD_MATRIX" >> "$GITHUB_OUTPUT"
+        CLEANED_MATRIX=$(echo "$SHARD_MATRIX" | jq -c '[.[] | select(length > 0)]')
+        echo $CLEANED_MATRIX
+        echo "matrix=$CLEANED_MATRIX" >> "$GITHUB_OUTPUT"
