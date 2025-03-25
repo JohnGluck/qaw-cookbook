@@ -39,5 +39,8 @@ runs:
         echo $CLEANED_MATRIX
         echo "matrix=$CLEANED_MATRIX" >> "$GITHUB_OUTPUT"
         trap 'cat $GITHUB_OUTPUT' EXIT
+
     - name: Debug matrix
-      run: echo "${{ steps.set-matrix.outputs.matrix }}"
+      shell: bash
+      run: |
+        echo "${{ steps.set-matrix.outputs.matrix }}"
