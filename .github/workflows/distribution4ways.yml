@@ -33,4 +33,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run Playwright Tests
-        run: npx playwright test ${{ join(matrix.testFile, ' ' }}
+        run: npx playwright test ${{ join(matrix.testFile, ' ') }}
