@@ -9,7 +9,7 @@ jobs:
     name: Generate Test Distribution
     runs-on: ubuntu-latest
     outputs:
-      matrix_b64: ${{ steps.set-matrix.outputs.matrix_b64 }}
+      matrix_b64: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
     name: Run Playwright Tests
     needs: generate-matrix
     strategy:
-      matrix: ${{ fromJson(fromBase64(needs.generate-matrix.outputs.matrix_b64)) }}
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
