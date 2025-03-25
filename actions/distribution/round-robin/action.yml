@@ -38,3 +38,6 @@ runs:
         CLEANED_MATRIX=$(echo "$SHARD_MATRIX" | jq -c '[.[] | select(length > 0)]')
         echo $CLEANED_MATRIX
         echo "matrix=$CLEANED_MATRIX" >> "$GITHUB_OUTPUT"
+        trap 'cat $GITHUB_OUTPUT' EXIT
+    - name: Debug matrix
+      run: echo "${{ steps.set-matrix.outputs.matrix }}"
