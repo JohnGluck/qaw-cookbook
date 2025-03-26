@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: argo
+  name: workflow-executor-role
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtaskresults"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: argo
+  name: workflow-executor-binding
+subjects:
+  - kind: ServiceAccount
+    name: workflow-executor
+    namespace: argo
+roleRef:
+  kind: Role
+  name: workflow-executor-role
+  apiGroup: rbac.authorization.k8s.io

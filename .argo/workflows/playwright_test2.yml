@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: playwright-test-
+spec:
+  entrypoint: run-all
+  volumes:
+    - name: tmp
+      emptyDir: {}
+  templates:
+    - name: run-all
+      steps:
+        - - name: list
+            template: list-tests
+        - - name: run
+            template: echo-test
+            arguments:
+              parameters:
+                - name: testFile
+                  value: "{{item}}"
+            withParam: "{{steps.list.outputs.parameters.test-files}}"
+    - name: list-tests
+      script:
+        image: busybox
+        command: [sh]
+        source: |
+          echo '["tests/example1.spec.ts", "tests/example2.spec.ts"]' > /tmp/out.json
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+      outputs:
+        parameters:
+          - name: test-files
+            valueFrom:
+              path: /tmp/out.json
+    - name: echo-test
+      inputs:
+        parameters:
+          - name: testFile
+      container:
+        image: busybox
+        command: ["echo"]
+        args: ["Running test:", "{{inputs.parameters.testFile}}"]
