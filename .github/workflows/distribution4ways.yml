@@ -47,7 +47,7 @@ jobs:
 
   merge-reports:
     name: Merge Playwright Reports
-    needs: test
+    needs: test-runner
     if: always()
     runs-on: ubuntu-latest
     steps:
