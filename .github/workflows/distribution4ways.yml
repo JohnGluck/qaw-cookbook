@@ -34,7 +34,12 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm ci
-
+        
+      - name:  Run Playwright Tests
+        run: |
+          npx playwright test ${{ join(matrix.testFile, ' ') }}
+          echo "matrix.testFile[0]"
+          echo matrix.testFile[0]
       # Sanitize the test file name to replace '/' with '-'
       - name: Sanitize artifact name
         id: sanitize
