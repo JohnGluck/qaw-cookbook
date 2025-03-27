@@ -4,25 +4,15 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 jobs:
-  generate-matrix:
-    name: Generate Test Distribution
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Choose Test Distribution Strategy
-        id: set-matrix
-        uses: ./actions/distribution/tags  # Change this line to switch strategies
 
   test-runner:
     name: Run Playwright Tests
-    needs: generate-matrix
     strategy:
       matrix:
-        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+        tags: ["@smoke", "@regression", "@e2e"]  # Matrix should be an object with a key 'tags'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
@@ -39,24 +29,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name:  Run Playwright
+      - name: Run Playwright Tests for Tag
         id: run
         run: |
-          npx playwright test ${{ join(matrix.testFile, ' ') }}
-
-      # Sanitize the test file name to replace '/' with '-'
-
-      - name: Sanitize artifact name
-        id: sanitize
-        run: |
-          sanitized_name="${{ matrix.testFile[0] }}"
-          sanitized_name=$(echo "$sanitized_name" | sed 's/\//-/g')  # Replace / with -
-          echo "sanitized_name=$sanitized_name" >> $GITHUB_ENV  # Save to environment variable
+          echo "Running Playwright tests for tag: ${{ matrix.tags }}"
+          npx playwright test --grep "${{ matrix.tags }}"  # Corrected to use matrix.tags
 
       - name: Upload test results artifact
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report-${{ env.sanitized_name }}  # Use the sanitized name
+          name: blob-report-${{ matrix.tags  }}  # Use the sanitized name
           path: blob-report/  # Path where Playwright stores the reports (update as needed)
           if-no-files-found: ignore
           retention-days: 1
