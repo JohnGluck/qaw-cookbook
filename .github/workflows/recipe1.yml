@@ -5,6 +5,8 @@ jobs:
   test:
     name: Run Playwright tests
     runs-on: ubuntu-latest #(microsoft/playwright)
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
     steps:
         #- name: Notify Slack (Job Started)
         #uses: rtCamp/action-slack-notify@v2
@@ -19,17 +21,17 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --config=playwright.config.recipe1.ts
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: blob-report
           path: playwright-report/
-          retention-days: 7
+          retention-days: 1
       # - name: Notify Slack (Job Success)
         #if: success()
         #uses: rtCamp/action-slack-notify@v2
