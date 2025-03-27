@@ -16,6 +16,7 @@ jobs:
       - name: Choose Test Distribution Strategy
         id: set-matrix
         uses: ./actions/distribution/round-robin  # Change this line to switch strategies
+
   test-runner:
     name: Run Playwright Tests
     needs: generate-matrix
@@ -26,21 +27,25 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - name: Install dependencies
         run: npm ci
-        
-      - name:  Run Playwright Tests
+
+      - name:  Run Playwright
         run: |
           npx playwright test ${{ join(matrix.testFile, ' ') }}
           echo "matrix.testFile[0]"
           echo matrix.testFile[0]
       # Sanitize the test file name to replace '/' with '-'
+      
       - name: Sanitize artifact name
         id: sanitize
         run: |
