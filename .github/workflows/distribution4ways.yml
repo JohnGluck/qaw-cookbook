@@ -23,6 +23,8 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.51.1-jammy
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
