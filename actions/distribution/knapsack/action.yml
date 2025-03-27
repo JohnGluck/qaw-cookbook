@@ -1,13 +1,51 @@
-name: Tag-Based Test Distribution
-description: Runs Playwright tests based on tags (@smoke, @regression, etc.)
+name: Adaptive Test Distribution
+description: Balances Playwright tests based on historical execution times
 outputs:
   matrix:
-    description: "Test tag matrix"
+    description: "Test distribution matrix"
     value: ${{ steps.set-matrix.outputs.matrix }}
 runs:
   using: "composite"
   steps:
-    - name: Define test groups
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: Install dependencies
+      run: npm ci
+      shell: bash
+
+    - name: Load Historical Test Execution Data from Cache
+      id: check-cache
+      uses: actions/cache@v3
+      with:
+        path: test-times.json  # Path to cache
+        key: ${{ runner.os }}-test-times-${{ hashFiles('**/*.js') }}  # Cache key based on JS files or any dependencies
+        restore-keys: |
+          ${{ runner.os }}-test-times-
+      shell: bash
+      continue-on-error: true # Allow the job to continue even if cache misses
+
+    - name: Generate Default Test Durations if No Cache Exists
+      if: steps.check-cache.outputs.cache-hit != 'true'
+      run: |
+        echo "Cache miss. Generating default test times."
+        npx playwright list-files --json | jq -c '[.[] | {test: .name, time: 5}]' > test-times.json
+      shell: bash
+
+    - name: Compute Balanced Test Groups
       id: set-matrix
       run: |
-        echo 'matrix={"tag":["@smoke", "@regression", "@e2e"]}' >> $GITHUB_ENV #here’s where you declare which tags to use
+        MATRIX=$(node .github/actions/adaptive-distribution/split-tests-by-time.js test-times.json 4) # number of shards set here
+        echo "matrix=$MATRIX" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Save Test Execution Data to Cache
+      uses: actions/cache@v3
+      with:
+        path: test-times.json
+        key: ${{ runner.os }}-test-times-${{ hashFiles('**/*.js') }} # Cache key
