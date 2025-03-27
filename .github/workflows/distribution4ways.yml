@@ -1,9 +1,5 @@
 name: Dynamic Distribution - Round Robin
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
 jobs:
   generate-matrix:
     name: Generate Test Distribution
