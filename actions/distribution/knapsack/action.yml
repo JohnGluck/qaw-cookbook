@@ -17,6 +17,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
+
       run: npm ci
 
     - name: Load Historical Test Execution Data from Cache
@@ -32,11 +33,11 @@ runs:
 
     - name: Generate Default Test Durations if No Cache Exists
       if: steps.check-cache.outputs.cache-hit != 'true'
-      shell: bash
       run: |
         echo "Cache miss. Generating default test times."
-        npx playwright list-files --json | jq -c '[.[] | {test: .name, time: 5}]' > test-times.json
-
+        # List all test files and create the default execution times JSON
+        find tests/ -name '*.spec.ts' | jq -R -s -c 'split("\n") | map({test: ., time: 5})' > test-times.json
+      shell: bash
 
     - name: Compute Balanced Test Groups
       id: set-matrix

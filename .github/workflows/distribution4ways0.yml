@@ -1,4 +1,4 @@
-name: Playwright Tests (Dynamic Distribution)
+name: Dynamic Distribution - Tags
 on:
   push:
     branches:
@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Choose Test Distribution Strategy
         id: set-matrix
-        uses: ./actions/distribution/knapsack  # Change this line to switch strategies
+        uses: ./actions/distribution/round-robin  # Change this line to switch strategies
 
   test-runner:
     name: Run Playwright Tests
@@ -43,17 +43,13 @@ jobs:
         id: run
         run: |
           npx playwright test ${{ join(matrix.testFile, ' ') }}
-          echo "matrix.testFile[0]"
-          echo matrix.testFile[0]
+
       # Sanitize the test file name to replace '/' with '-'
 
       - name: Sanitize artifact name
         id: sanitize
         run: |
           sanitized_name="${{ matrix.testFile[0] }}"
-          echo matrix.testFile[0]
-          echo "${{ matrix.testFile[0] }}"
-          echo $sanitized_name
           sanitized_name=$(echo "$sanitized_name" | sed 's/\//-/g')  # Replace / with -
           echo "sanitized_name=$sanitized_name" >> $GITHUB_ENV  # Save to environment variable
 
