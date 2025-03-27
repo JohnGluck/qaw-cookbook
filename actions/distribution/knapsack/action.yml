@@ -16,8 +16,8 @@ runs:
         node-version: 18
 
     - name: Install dependencies
-      run: npm ci
       shell: bash
+      run: npm ci
 
     - name: Load Historical Test Execution Data from Cache
       id: check-cache
@@ -27,22 +27,24 @@ runs:
         key: ${{ runner.os }}-test-times-${{ hashFiles('**/*.js') }}  # Cache key based on JS files or any dependencies
         restore-keys: |
           ${{ runner.os }}-test-times-
-      shell: bash
+
       continue-on-error: true # Allow the job to continue even if cache misses
 
     - name: Generate Default Test Durations if No Cache Exists
       if: steps.check-cache.outputs.cache-hit != 'true'
+      shell: bash
       run: |
         echo "Cache miss. Generating default test times."
         npx playwright list-files --json | jq -c '[.[] | {test: .name, time: 5}]' > test-times.json
-      shell: bash
+
 
     - name: Compute Balanced Test Groups
       id: set-matrix
+      shell: bash
       run: |
         MATRIX=$(node .github/actions/adaptive-distribution/split-tests-by-time.js test-times.json 4) # number of shards set here
         echo "matrix=$MATRIX" >> $GITHUB_ENV
-      shell: bash
+
 
     - name: Save Test Execution Data to Cache
       uses: actions/cache@v3
