@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: playwright-tests-
+spec:
+  serviceAccountName: workflow-executor
+  entrypoint: run-all-tests
+  templates:
+    - name: run-all-tests
+      steps:
+        - - name: discover-tests
+            template: discover-tests
+        - - name: run-test
+            template: run-test
+            arguments:
+              parameters:
+                - name: testFile
+                  value: "{{item}}"
+            withParam: "{{steps.discover-tests.outputs.parameters.test-files}}"
+
+    - name: discover-tests
+      script:
+        image: localhost:5000/playwright-tests:latest
+        command: [sh]
+        source: |
+          # List all Playwright test files
+          TEST_FILES=$(npx playwright test --list --reporter=json | jq -c '[.suites[].specs[].file] | unique')
+
+          # Output the test files as JSON
+          echo $TEST_FILES > /tmp/test-files.json
+        volumeMounts:
+          - name: project-dir
+            mountPath: /path/to/your/project
+      outputs:
+        parameters:
+          - name: test-files
+            valueFrom:
+              path: /tmp/test-files.json
+
+    - name: run-test
+      inputs:
+        parameters:
+          - name: testFile
+      container:
+        image: localhost:5000/playwright-tests:latest
+        command: [sh, -c]
+        args: ["npx", "playwright", "test", "{{inputs.parameters.testFile}}"]
+        volumeMounts:
+          - name: project-dir
+            mountPath: /path/to/your/project
+
+  volumes:
+    - name: project-dir
+      emptyDir: {}

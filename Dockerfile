@@ -1,5 +1,9 @@
 FROM mcr.microsoft.com/playwright:v1.51.1-jammy
 
+
+# Install jq
+RUN apt-get update && apt-get install -y jq
+
 # Set working directory
 WORKDIR /app
 
