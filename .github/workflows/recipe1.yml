@@ -1,4 +1,4 @@
-name: Testing with GitHub Actions
+name: Single
 on:
   workflow_dispatch:
 jobs:
@@ -15,10 +15,12 @@ jobs:
         #  SLACK_MESSAGE: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - name: Install dependencies
         run: npm ci
 
