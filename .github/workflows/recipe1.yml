@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest #(microsoft/playwright)
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    #this needs to be here for Firefox
+    env:
+      HOME: /root
     steps:
         #- name: Notify Slack (Job Started)
         #uses: rtCamp/action-slack-notify@v2

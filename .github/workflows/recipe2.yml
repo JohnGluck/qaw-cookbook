@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
+    #this needs to be here for Firefox
+
     env:
       HOME: /root
     strategy:
