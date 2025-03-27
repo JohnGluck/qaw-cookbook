@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: blob-report-${{ matrix.testFile[0] }}  # Unique name per test file
-          path: blob-report
+          path: blob-report/
           retention-days: 1
           if-no-files-found: ignore
 
