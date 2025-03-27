@@ -36,12 +36,14 @@ jobs:
         run: npm ci
 
       - name: Run Playwright Tests
-        run: npx playwright test ${{ join(matrix.testFile, ' ') }}
-
+        run: |
+          npx playwright test ${{ join(matrix.testFile, ' ') }}
+          echo "matrix.testFile[0]"
+          echo matrix.testFile[0]
       - name: Upload test results artifact
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report-${{ matrix.testFile[0] | replace('/', '-') }}  # Replace forward slash with dash
+          name: blob-report-${{ matrix.testFile[0] }}  # Replace forward slash with dash
           path: blob-report/  # Path where Playwright stores the reports (update as needed)
           if-no-files-found: ignore
           retention-days: 1
