@@ -1,4 +1,4 @@
-name: Single
+name: Single Shard Execution
 on:
   workflow_dispatch:
 jobs:
@@ -31,8 +31,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report
-          path: playwright-report/
+          name: playwright-report
+          path: playwright-report
           retention-days: 1
       # - name: Notify Slack (Job Success)
         #if: success()
@@ -40,9 +40,9 @@ jobs:
         #env:
         #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         #  SLACK_MESSAGE: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
-      - name: Notify Slack (Job Failure)
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
+    #  - name: Notify Slack (Job Failure)
+    #    if: failure()
+    #    uses: rtCamp/action-slack-notify@v2
         #env:
         #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         #  SLACK_MESSAGE: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."

@@ -1,4 +1,4 @@
-name: Testing with Dynamic Sharding
+name: Static Sharding
 on:
   workflow_dispatch:
 jobs:
@@ -64,4 +64,4 @@ jobs:
       with:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
-        retention-days: 7
+        retention-days: 1

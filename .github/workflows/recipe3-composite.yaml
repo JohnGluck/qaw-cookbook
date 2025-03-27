@@ -1,4 +1,4 @@
-name: Adaptive Playwright Tests
+name: Adaptive Playwright Tests (composite)
 on: workflow_dispatch
 
 #on:
