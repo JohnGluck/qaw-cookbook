@@ -9,5 +9,6 @@ runs:
   steps:
     - name: Define test groups
       id: set-matrix
+      shell: bash
       run: |
         echo 'matrix={"tag":["@smoke", "@regression", "@e2e"]}' >> $GITHUB_ENV #here’s where you declare which tags to use
