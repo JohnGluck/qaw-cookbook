@@ -39,7 +39,7 @@ jobs:
         run: npx playwright test ${{ join(matrix.testFile, ' ') }}
 
       - name: Upload test results artifact
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: blob-report-${{ matrix.testFile[0] }}  # Unique name per test file
           path:: blob-report/  # Path where Playwright stores the reports (update as needed)
