@@ -1,7 +1,7 @@
-name: Dynamic Distribution - Round Robin
+name: Dynamic Distribution - Paths
 on:
   workflow_dispatch:
-  workflow_dispatch:
+
 jobs:
   generate-matrix:
     name: Generate Test Distribution
