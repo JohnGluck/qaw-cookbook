@@ -33,7 +33,7 @@ jobs:
         id: run
         run: |
           echo "Running Playwright tests for tag: ${{ matrix.items }}"
-          npx playwright test --grep "${{ matrix.items }}"  # Corrected to use matrix.tags
+          npx playwright test --config="${{ matrix.items }}"  # Corrected to use matrix.tags
 
       - name: Upload test results artifact
         uses: actions/upload-artifact@v4
