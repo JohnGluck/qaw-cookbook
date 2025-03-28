@@ -13,7 +13,7 @@ RUN npm ci
 
 # Copy only the files required to run tests
 COPY playwright.config.ts ./
-COPY tests ./tests
+COPY tests2 ./tests
 
 # Set default command (optional)
 CMD ["npx", "playwright", "test"]

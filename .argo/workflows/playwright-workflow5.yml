@@ -23,19 +23,22 @@ spec:
         image: localhost:5000/playwright-tests:latest
         command: [sh]
         source: |
-          # List all Playwright test files
-          TEST_FILES=$(npx playwright test --list --reporter=json | jq -c '[.suites[].specs[].file] | unique')
+          # List all Playwright test files (ensure they are relative to /app)
+          TEST_FILES=$(npx playwright test --list --reporter=json | jq -r '.suites[].specs[].file' | sort | uniq)
 
-          # Output the test files as JSON
-          echo $TEST_FILES > /tmp/test-files.json
+          # Log the discovered test files
+          echo "Discovered test files: $TEST_FILES"
+
+          # Output the test files as a space-separated list
+          echo $TEST_FILES > /tmp/test-files.txt
         volumeMounts:
           - name: project-dir
-            mountPath: /path/to/your/project
+            mountPath: /data  # Mount the project directory to /app
       outputs:
         parameters:
           - name: test-files
             valueFrom:
-              path: /tmp/test-files.json
+              path: /tmp/test-files.txt
 
     - name: run-test
       inputs:
@@ -44,11 +47,21 @@ spec:
       container:
         image: localhost:5000/playwright-tests:latest
         command: [sh, -c]
+        args: |
+          # Log the testFile being executed (for debugging)
+          echo "Running test: {{inputs.parameters.testFile}}"
+
+          # Run the Playwright test using the correct file path relative to /app
         args: ["npx", "playwright", "test", "{{inputs.parameters.testFile}}"]
         volumeMounts:
           - name: project-dir
-            mountPath: /path/to/your/project
+            mountPath: /data  # Ensure consistency with the mount path
+          - name: report-volume
+            mountPath: /mnt/playwrigfht-reports
 
   volumes:
     - name: project-dir
-      emptyDir: {}
+      emptyDir: {}  # Temporary volume to mount project files
+    - name: report-volume
+      persistentVolumeClaim:
+        claimName: playwright-reports-pvc  # Reference to the PVC for storing reports

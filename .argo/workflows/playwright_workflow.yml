@@ -30,7 +30,7 @@ spec:
           echo $TEST_FILES > /tmp/test-files.json
         volumeMounts:
           - name: project-dir
-            mountPath: /path/to/your/project
+            mountPath: /data
       outputs:
         parameters:
           - name: test-files
@@ -47,8 +47,13 @@ spec:
         args: ["npx", "playwright", "test", "{{inputs.parameters.testFile}}"]
         volumeMounts:
           - name: project-dir
-            mountPath: /path/to/your/project
+            mountPath: /data  # Mounting the project directory to /data in the container
+          - name: report-volume
+            mountPath: /mnt/playwright-reports
 
   volumes:
     - name: project-dir
       emptyDir: {}
+    - name: report-volume
+      persistentVolumeClaim:
+        claimName: playwright-reports-pvc
