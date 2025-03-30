@@ -10,13 +10,15 @@ spec:
       steps:
         - - name: discover-tests
             template: discover-tests
-        - - name: run-test
+        - - name: run-tests
             template: run-test
             arguments:
               parameters:
                 - name: testFile
                   value: "{{item}}"
             withParam: "{{steps.discover-tests.outputs.parameters.test-files}}"
+        - - name: merge-reports
+            template: merge-reports
 
     - name: discover-tests
       script:
@@ -25,12 +27,10 @@ spec:
         source: |
           # List all Playwright test files
           TEST_FILES=$(npx playwright test --list --reporter=json | jq -c '[.suites[].specs[].file] | unique')
-
+          echo {{workflow.uid}}
           # Output the test files as JSON
           echo $TEST_FILES > /tmp/test-files.json
-        volumeMounts:
-          - name: project-dir
-            mountPath: /data
+
       outputs:
         parameters:
           - name: test-files
@@ -41,19 +41,74 @@ spec:
       inputs:
         parameters:
           - name: testFile
-      container:
+      script:
         image: localhost:5000/playwright-tests:latest
-        command: [sh, -c]
-        args: ["npx", "playwright", "test", "{{inputs.parameters.testFile}}"]
+        command: [sh]
+        env:
+          - name: POD_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        source: |
+          set -e  # Exit immediately if any command fails
+          echo "Playwright headless"
+          echo $PLAYWRIGHT_HEADLESS
+          # Ensure the directory exists for the report
+          mkdir -p /mnt/playwright-reports/{{workflow.uid}}
+
+          # Print the workflow UID for debugging
+          echo "Workflow UID: {{workflow.uid}}"
+
+          # Run Playwright tests (headful for visibility)
+          npx playwright test --reporter blob
+          # Copy the blob report into the mounted volume, using the Pod name as part of the filename
+          echo "Copying blob report to /mnt/playwright-reports/{{workflow.uid}}/$POD_ID.zip"
+          cp blob-report/report.zip /mnt/playwright-reports/{{workflow.uid}}/$POD_ID.zip
+
+# This gets the unique Pod name
+
         volumeMounts:
-          - name: project-dir
-            mountPath: /data  # Mounting the project directory to /data in the container
           - name: report-volume
-            mountPath: /mnt/playwright-reports
+            mountPath: /mnt/playwright-reports  # Mount the report PVC for storing reports
+
+    - name: merge-reports
+      script:
+        image: localhost:5000/playwright-tests:latest
+        command: [sh]
+        source: |
+          REPORT_DIR="/mnt/playwright-reports/{{workflow.uid}}"
+          # Ensure the directory exists
+          mkdir -p "$REPORT_DIR"
+
+          # Define the path for the merged report
+          REPORT_FILE="$REPORT_DIR/merged-report.txt"
+          echo "Running merge report..."
+
+          npx playwright merge-reports --reporter list $REPORT_DIR > merged-report.txt
+          ls
+
+          # Copy the merged report to the specified path
+          cp merged-report.txt $REPORT_DIR
+          echo "Merged report saved at $REPORT_FILE"
+          ls $REPORT_FILE
+
+        volumeMounts:
+          - name: report-volume
+            mountPath: /mnt/playwright-reports  # Mount the PVC for storing reports
+
+      outputs:
+        artifacts:
+          - name: merged-report
+            path: "/mnt/playwright-reports/{{workflow.uid}}/merged-report.txt"  # Use the full expanded path
+            persistentVolumeClaim:
+              claimName: playwright-reports-pvc  # Reference to the PVC for storing the merged report
+              mountPath: /mnt/playwright-reports
+
+        volumeMounts:
+          - name: report-volume
+            mountPath: /mnt/playwright-reports  # Mount the PVC for storing reports
 
   volumes:
-    - name: project-dir
-      emptyDir: {}
     - name: report-volume
       persistentVolumeClaim:
-        claimName: playwright-reports-pvc
+        claimName: playwright-reports-pvc  # Reference to the PVC for storing reports

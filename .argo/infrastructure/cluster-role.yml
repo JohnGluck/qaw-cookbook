@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: workflow-executor-clusterrole
+rules:
+  # Allow interacting with workflow task results (specific to Argo Workflows)
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtaskresults"]
+    verbs: ["create", "patch", "get", "list"]
+
+  # Allow interacting with persistent volume claims (PVCs) for storing reports
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims", "pods", "pods/log"]
+    verbs: ["get", "list", "create", "delete", "update"]
+
+  # Allow getting PVC status and updating it
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["get", "update"]
