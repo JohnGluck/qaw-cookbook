@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+  namespace: argo
+spec:
+  serviceAccountName: workflow-executor  # Specify the correct service account here
+  containers:
+    - name: busybox
+      image: busybox
+      command: ["sleep", "3600"]  # Keep the pod running
+      volumeMounts:
+        - name: report-volume
+          mountPath: /mnt/playwright-reports
+  volumes:
+    - name: report-volume
+      persistentVolumeClaim:
+        claimName: playwright-reports-pvc  # Reference your PVC

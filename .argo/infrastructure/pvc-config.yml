@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-server-configmap
+  namespace: argo
+data:
+  artifactRepository: |
+    pvc:
+      mountPath: /mnt/playwright-reports
+      claimName: playwright-reports-pvc

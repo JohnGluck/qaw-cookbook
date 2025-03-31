@@ -25,6 +25,7 @@ spec:
         image: localhost:5000/playwright-tests:latest
         command: [sh]
         source: |
+          rm -rf /mnt/playwright-reports/*
           # List all Playwright test files
           TEST_FILES=$(npx playwright test --list --reporter=json | jq -c '[.suites[].specs[].file] | unique')
           echo {{workflow.uid}}
@@ -77,36 +78,23 @@ spec:
         command: [sh]
         source: |
           REPORT_DIR="/mnt/playwright-reports/{{workflow.uid}}"
-          # Ensure the directory exists
-          mkdir -p "$REPORT_DIR"
-
-          # Define the path for the merged report
-          REPORT_FILE="$REPORT_DIR/merged-report.txt"
-          echo "Running merge report..."
-
+          # Run the merge report command
           npx playwright merge-reports --reporter list $REPORT_DIR > merged-report.txt
-          ls
-
-          # Copy the merged report to the specified path
-          cp merged-report.txt $REPORT_DIR
-          echo "Merged report saved at $REPORT_FILE"
-          ls $REPORT_FILE
+          mkdir -p /tmp/{{workflow.uid}}
+          cp merged-report.txt /mnt/playwright-reports/{{workflow.uid}}-merged-report.txt
 
         volumeMounts:
           - name: report-volume
             mountPath: /mnt/playwright-reports  # Mount the PVC for storing reports
 
-      outputs:
-        artifacts:
-          - name: merged-report
-            path: "/mnt/playwright-reports/{{workflow.uid}}/merged-report.txt"  # Use the full expanded path
-            persistentVolumeClaim:
-              claimName: playwright-reports-pvc  # Reference to the PVC for storing the merged report
-              mountPath: /mnt/playwright-reports
+        outputs:
+          artifacts:
+            - name: merged-report
+              path: /mnt/playwright-reports/{{workflow.uid}}-merged-report.txt  # Use the exact path
+              persistentVolumeClaim:
+                claimName: playwright-reports-pvc  # Reference to the PVC for storing the merged report
+                mountPath: /mnt/playwright-reports
 
-        volumeMounts:
-          - name: report-volume
-            mountPath: /mnt/playwright-reports  # Mount the PVC for storing reports
 
   volumes:
     - name: report-volume
