@@ -80,20 +80,20 @@ spec:
           REPORT_DIR="/mnt/playwright-reports/{{workflow.uid}}"
           # Run the merge report command
           npx playwright merge-reports --reporter list $REPORT_DIR > merged-report.txt
-          mkdir -p /tmp/{{workflow.uid}}
-          cp merged-report.txt /mnt/playwright-reports/{{workflow.uid}}-merged-report.txt
+          #mkdir -p /tmp/{{workflow.uid}}
+          cp merged-report.txt /tmp/{{workflow.uid}}-merged-report.txt
 
         volumeMounts:
           - name: report-volume
             mountPath: /mnt/playwright-reports  # Mount the PVC for storing reports
 
-        outputs:
-          artifacts:
-            - name: merged-report
-              path: /mnt/playwright-reports/{{workflow.uid}}-merged-report.txt  # Use the exact path
-              persistentVolumeClaim:
-                claimName: playwright-reports-pvc  # Reference to the PVC for storing the merged report
-                mountPath: /mnt/playwright-reports
+      outputs:
+        artifacts:
+          - name: merged-report
+            path: /tmp/{{workflow.uid}}-merged-report.txt  # Use the exact path
+            persistentVolumeClaim:
+              claimName: playwright-reports-pvc  # Reference to the PVC for storing the merged report
+              mountPath: /mnt/playwright-reports
 
 
   volumes:
