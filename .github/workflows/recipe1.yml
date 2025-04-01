@@ -16,11 +16,15 @@ jobs:
     env:
       HOME: /root
     steps:
-      - name: Notify Slack (Job Started)
-        uses: rtCamp/action-slack-notify@v2
+      - name: Notify Slack (Job Success)
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          # eng-monitoring-ops
+          channel-id: "C05MLFS7T4N"
+          slack-message: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_MESSAGE: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
+
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,13 +50,20 @@ jobs:
 
       - name: Notify Slack (Job Success)
         if: success()
-        uses: rtCamp/action-slack-notify@v2
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          # eng-monitoring-ops
+          channel-id: "C05MLFS7T4N"
+          slack-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_MESSAGE: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
-      - name: Notify Slack (Job Failure)
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
+
+      - name: Notify Slack (Job Success)
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          # eng-monitoring-ops
+          channel-id: "C05MLFS7T4N"
+          slack-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_MESSAGE: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
