@@ -1,6 +1,11 @@
 name: Single Shard Execution
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 jobs:
   test:
     name: Run Playwright tests
