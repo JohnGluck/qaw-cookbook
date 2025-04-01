@@ -28,7 +28,6 @@ jobs:
       - name: Run Playwright Tests for Tag
         id: run
         run: |
-          echo "Running Playwright tests for tag: ${{ matrix.items }}"
           npx playwright test --config="${{ matrix.items }}"  # Corrected to use matrix.tags
 
       - name: Upload test results artifact
@@ -48,4 +47,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge reports
-        uses: ./actions/merge-reports
+        uses: .github/actions/merge-reports
