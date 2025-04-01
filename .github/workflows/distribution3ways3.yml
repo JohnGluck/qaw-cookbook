@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Playwright Tests for Tag
+      - name: Run Playwright Tests for path
         id: run
         run: |
           npx playwright test "${{ matrix.items }}"/  # Corrected to use matrix.tags
