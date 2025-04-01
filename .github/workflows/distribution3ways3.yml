@@ -8,7 +8,7 @@ jobs:
     name: Run Playwright Tests
     strategy:
       matrix:
-        items: ["tests", "tests2"]  # Matrix should be an object with a key 'tags'
+        items: ["./tests", "./tests2"]  # Matrix should be an object with a key 'tags'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
@@ -28,7 +28,7 @@ jobs:
       - name: Run Playwright Tests for path
         id: run
         run: |
-          npx playwright test ${{ matrix.items }}/  # Corrected to use matrix.tags
+          npx playwright test ${{ matrix.items }}  # Corrected to use matrix.tags
 
       - name: Upload test results artifact
         uses: actions/upload-artifact@v4
