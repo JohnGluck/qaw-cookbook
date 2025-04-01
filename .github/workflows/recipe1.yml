@@ -20,11 +20,10 @@ jobs:
         uses: slackapi/slack-github-action@v1.23.0
         with:
           # eng-monitoring-ops
-          channel-id: "C05MLFS7T4N"
+          channel-id: "C03CX7K9JJG"
           slack-message: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
-
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -53,7 +52,7 @@ jobs:
         uses: slackapi/slack-github-action@v1.23.0
         with:
           # eng-monitoring-ops
-          channel-id: "C05MLFS7T4N"
+          channel-id: "C03CX7K9JJG"
           slack-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
@@ -63,7 +62,7 @@ jobs:
         uses: slackapi/slack-github-action@v1.23.0
         with:
           # eng-monitoring-ops
-          channel-id: "C05MLFS7T4N"
+          channel-id: "C03CX7K9JJG"
           slack-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
