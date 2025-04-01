@@ -11,11 +11,12 @@ jobs:
     env:
       HOME: /root
     steps:
-        #- name: Notify Slack (Job Started)
-        #uses: rtCamp/action-slack-notify@v2
-        #env:
-        #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        #  SLACK_MESSAGE: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
+      - name: Notify Slack (Job Started)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -37,15 +38,16 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 1
-      # - name: Notify Slack (Job Success)
-        #if: success()
-        #uses: rtCamp/action-slack-notify@v2
-        #env:
-        #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        #  SLACK_MESSAGE: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
-    #  - name: Notify Slack (Job Failure)
-    #    if: failure()
-    #    uses: rtCamp/action-slack-notify@v2
-        #env:
-        #  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        #  SLACK_MESSAGE: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+
+      - name: Notify Slack (Job Success)
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
+      - name: Notify Slack (Job Failure)
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
