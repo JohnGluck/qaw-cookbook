@@ -27,6 +27,7 @@ runs:
       with:
         channel-id: ${{ inputs.channel-id }}
         slack-message: ${{ inputs.success-message }}
+      env:
         SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
 
     - name: Notify Slack (Job Failure)
@@ -35,4 +36,5 @@ runs:
       with:
         channel-id: ${{ inputs.channel-id }}
         slack-message: ${{ inputs.failure-message }}
+      env:
         SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
