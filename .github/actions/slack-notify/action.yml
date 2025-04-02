@@ -20,18 +20,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
+
     - name: Notify Slack (Job Success)
       if: success()
       uses: slackapi/slack-github-action@v1.23.0
       with:
-        channel-id: {{ inputs.channel-id }}
-        slack-message: {{ inputs.success-message }}
+        channel-id: ${{ inputs.channel-id }}
+        slack-message: ${{ inputs.success-message }}
         SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
 
     - name: Notify Slack (Job Failure)
       if: failure()
       uses: slackapi/slack-github-action@v1.23.0
       with:
-        channel-id: {{ inputs.channel-id }}
-        slack-message: {{ inputs.failure-message }}
+        channel-id: ${{ inputs.channel-id }}
+        slack-message: ${{ inputs.failure-message }}
         SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
