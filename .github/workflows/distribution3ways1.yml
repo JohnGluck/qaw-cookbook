@@ -1,6 +1,8 @@
 name: Dynamic Distribution - Round Robin
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   generate-matrix:

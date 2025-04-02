@@ -1,10 +1,8 @@
 name: Adaptive Playwright Tests (composite)
-on: workflow_dispatch
-
-#on:
-#  push:
-#    branches: [main]
-#  pull_request:
+on:
+  push:
+    branches:
+      - master
 
 concurrency:
   group: "tests-${{ github.ref }}"
