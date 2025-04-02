@@ -4,7 +4,7 @@ inputs:
   channel-id:
     description: 'Slack channel ID to send notifications to'
     required: true
-    default: 'C03CX7K9JJG'
+    default: ''
   success-message:
     description: 'Message to send when the job is successful'
     required: true
@@ -22,8 +22,16 @@ runs:
   steps:
     - name: Notify Slack (Job Success)
       if: success()
-      run: ./slack_notify.sh ${{ inputs.channel-id }} ${{ inputs.success-message }} ${{ inputs.slack-token }}
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        channel-id: {{ inputs.channel-id }}
+        slack-message: {{ inputs.success-message }}
+        SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
 
     - name: Notify Slack (Job Failure)
       if: failure()
-      run: ./slack_notify.sh ${{ inputs.channel-id }} ${{ inputs.failure-message }} ${{ inputs.slack-token }}
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        channel-id: {{ inputs.channel-id }}
+        slack-message: {{ inputs.failure-message }}
+        SLACK_BOT_TOKEN: ${{ inputs.slack-token }}
