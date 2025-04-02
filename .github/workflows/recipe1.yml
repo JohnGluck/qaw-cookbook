@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
 jobs:
   test:
     name: Run Playwright tests
@@ -14,14 +13,6 @@ jobs:
     env:
       HOME: /root
     steps:
-      - name: Notify Slack (Job Success)
-        uses: slackapi/slack-github-action@v1.23.0
-        with:
-          # eng-monitoring-ops
-          channel-id: "C03CX7K9JJG"
-          slack-message: "Playwright tests have started for ${{ github.repository }} - ${{ github.ref }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
 
       - name: Checkout repository
         uses: actions/checkout@v4

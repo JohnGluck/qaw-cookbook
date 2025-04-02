@@ -1,4 +1,4 @@
-name: Static Sharding
+name: Test Sharding
 on:
   push:
     branches:
@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,3 +69,24 @@ jobs:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
         retention-days: 1
+
+    - name: Notify Slack (Job Success)
+      if: success()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # eng-monitoring-ops
+        channel-id: "C03CX7K9JJG"
+        slack-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}
+
+
+    - name: Notify Slack (Job Success)
+      if: failure()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # eng-monitoring-ops
+        channel-id: "C03CX7K9JJG"
+        slack-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_SEND_TOKEN }}

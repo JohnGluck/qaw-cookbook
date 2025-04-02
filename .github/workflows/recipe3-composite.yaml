@@ -23,7 +23,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  controller:
+  generate-shard:
     runs-on: ubuntu-latest
     needs: check-capacity
     outputs:
@@ -46,16 +46,9 @@ jobs:
           name: test-splits
           path: test-splits/
 
-  debug-shard-output:
-    needs: controller
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "🔍 SHARD LIST: ${{ needs.controller.outputs.shard_list }}"
-
   test:
     name: Run ${{ matrix.shard }} on ${{ matrix.browser }}
-    needs: controller
+    needs: generate-shard
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.51.1-jammy
@@ -63,7 +56,7 @@ jobs:
       HOME: /root
     strategy:
       matrix:
-        shard: ${{ fromJson(needs.controller.outputs.shard_list) }}
+        shard: ${{ fromJson(needs.generate-shard.outputs.shard_list) }}
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
@@ -84,3 +77,18 @@ jobs:
 
       - name: Merge reports
         uses: ./.github/actions/merge-reports
+
+  notify-slack:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Notify Slack
+        uses: ./.github/actions/slack-notify
+        with:
+          channel-id: "C03CX7K9JJG"
+          success-message: "✅ Playwright tests passed for ${{ github.repository }} - ${{ github.ref }}"
+          failure-message: "❌ Playwright tests failed for ${{ github.repository }} - ${{ github.ref }}. Check logs for details."
+          slack-token: ${{ secrets.SLACK_SEND_TOKEN }}
